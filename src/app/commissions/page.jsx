@@ -1,22 +1,31 @@
+"use client";
+import { useState } from "react";
+
 export default function CommissionsTable() {
+
+  const [open, setOpen] = useState(false);
+
   return (
     <section className="commissionsTable">
 
       {/* HEADER */}
       <div className="commissionsTable__top">
+
         <div>
           <h1>Commissions</h1>
           <p>Track all client commissions, payments & status</p>
         </div>
 
-        <button>+ New</button>
+        <button onClick={() => setOpen(true)}>
+          + New
+        </button>
+
       </div>
 
       {/* TABLE */}
       <div className="tableWrap">
 
         <table>
-
           <thead>
             <tr>
               <th>ID</th>
@@ -41,31 +50,57 @@ export default function CommissionsTable() {
               <td><span className="status paid">Received</span></td>
             </tr>
 
-            <tr>
-              <td>#A1002</td>
-              <td>Studio X</td>
-              <td>Office Interior</td>
-              <td>₹8,50,000</td>
-              <td>10%</td>
-              <td>₹85,000</td>
-              <td><span className="status pending">Pending</span></td>
-            </tr>
-
-            <tr>
-              <td>#A1003</td>
-              <td>Nexus Group</td>
-              <td>Commercial Tower</td>
-              <td>₹25,00,000</td>
-              <td>6%</td>
-              <td>₹1,50,000</td>
-              <td><span className="status review">In Review</span></td>
-            </tr>
-
           </tbody>
 
         </table>
 
       </div>
+
+      {/* MODAL */}
+      {open && (
+        <div className="modalOverlay" onClick={() => setOpen(false)}>
+
+          <div className="modalBox" onClick={(e) => e.stopPropagation()}>
+
+            <div className="modalHeader">
+              <h2>Add Commission</h2>
+              <button onClick={() => setOpen(false)}>✕</button>
+            </div>
+
+            <div className="modalBody">
+
+              <input placeholder="Party Name" />
+              <input placeholder="Project Name" />
+              <input type="number" placeholder="Total Amount (₹)" />
+              <input type="number" placeholder="Commission %" />
+
+              <select>
+                <option>Pending</option>
+                <option>Received</option>
+                <option>In Review</option>
+              </select>
+
+            </div>
+
+            <div className="modalFooter">
+
+              <button
+                className="cancel"
+                onClick={() => setOpen(false)}
+              >
+                Cancel
+              </button>
+
+              <button className="save">
+                Save Commission
+              </button>
+
+            </div>
+
+          </div>
+
+        </div>
+      )}
 
     </section>
   );
