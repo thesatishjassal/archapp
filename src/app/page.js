@@ -21,11 +21,11 @@ export default function ArchitectPortal() {
               </div>
 
               <h1 className="auth__title">
-                Join the Architect Partner Portal
+                Join The Partner Portal
               </h1>
 
               <p className="auth__desc">
-                Access Reward Points, invoices, orders and payouts
+                Access Reward Points, orders and payouts
                 from one clean dashboard experience.
               </p>
             </div>
