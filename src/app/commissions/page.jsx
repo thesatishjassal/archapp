@@ -12,8 +12,8 @@ export default function CommissionsTable() {
       <div className="commissionsTable__top">
 
         <div>
-          <h1>Commissions</h1>
-          <p>Track all client commissions, payments & status</p>
+          <h1>Reward Points</h1>
+          <p>Track all client Reward Points, payments & status</p>
         </div>
 
         <button onClick={() => setOpen(true)}>
@@ -32,8 +32,8 @@ export default function CommissionsTable() {
               <th>Party Name</th>
               <th>Project</th>
               <th>Total Amount</th>
-              <th>Commission %</th>
-              <th>Commission ₹</th>
+              <th>Reward Points %</th>
+              <th>Reward Points ₹</th>
               <th>Status</th>
             </tr>
           </thead>
@@ -72,7 +72,7 @@ export default function CommissionsTable() {
               <input placeholder="Party Name" />
               <input placeholder="Project Name" />
               <input type="number" placeholder="Total Amount (₹)" />
-              <input type="number" placeholder="Commission %" />
+              <input type="number" placeholder="Reward Points %" />
 
               <select>
                 <option>Pending</option>
@@ -92,7 +92,7 @@ export default function CommissionsTable() {
               </button>
 
               <button className="save">
-                Save Commission
+                Save Reward Points
               </button>
 
             </div>

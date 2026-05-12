@@ -35,7 +35,7 @@ export default function RegisterPage() {
 
               <p className="register__subtext">
                 Complete your architect partner
-                registration to access commissions,
+                registration to access Reward Points,
                 payouts and dashboard features.
               </p>
 

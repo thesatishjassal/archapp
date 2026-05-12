@@ -128,7 +128,7 @@ export default function SettingsPage() {
             <h3>Delete Account</h3>
 
             <p>
-              Once deleted, all your commissions, projects and data will be permanently removed.
+              Once deleted, all your Reward Points, projects and data will be permanently removed.
             </p>
 
             <button className="ig__dangerBtn">

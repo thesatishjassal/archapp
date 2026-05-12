@@ -25,7 +25,7 @@ export default function ArchitectPortal() {
               </h1>
 
               <p className="auth__desc">
-                Access commissions, invoices, orders and payouts
+                Access Reward Points, invoices, orders and payouts
                 from one clean dashboard experience.
               </p>
             </div>

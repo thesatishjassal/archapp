@@ -78,7 +78,7 @@ export default function DashboardPage() {
         {/* COMMISSIONS */}
         <div className="dash__box">
 
-          <h3>Latest Commissions</h3>
+          <h3>Latest Reward Points</h3>
 
           <div className="dash__item">
             <div>
