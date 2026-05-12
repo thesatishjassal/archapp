@@ -10,9 +10,9 @@ export default function DashboardPage() {
           <p>Overview of your architecture studio</p>
         </div>
 
-        <button className="dash__btn">
+        <a href="/profile" className="dash__btn">
           + New Project
-        </button>
+        </a>
 
       </header>
 

@@ -52,7 +52,7 @@ export default function ArchitectPortal() {
               {/* GOOGLE */}
 
               <Link
-                href="/complete_profile"
+                href="/register"
                 className="auth__google"
               >
                 <svg
