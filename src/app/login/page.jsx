@@ -25,7 +25,7 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        'https://api.panvik.in/api/arch-auth/send-otp',
+        'https://api.panvic.in/api/arch-auth/send-otp',
         {
           method: 'POST',
           headers: {
@@ -62,7 +62,7 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        'https://api.panvik.in/api/arch-auth/verify-otp',
+        'https://api.panvic.in/api/arch-auth/verify-otp',
         {
           method: 'POST',
           headers: {
