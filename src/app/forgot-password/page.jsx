@@ -12,6 +12,8 @@ export default function ForgotPasswordPage() {
 
     setSuccess(true);
 
+
+
   };
 
   return (
@@ -98,7 +100,6 @@ export default function ForgotPasswordPage() {
             </a>
 
           </div>
-
         </div>
 
       </section>

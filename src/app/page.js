@@ -93,7 +93,7 @@ export default function ArchitectPortal() {
 
               <Link
                 href="/register"
-                className="auth__register"
+                className="auth__register"k
               >
                 Register Now
               </Link>

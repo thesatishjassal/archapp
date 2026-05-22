@@ -2,47 +2,158 @@
 
 import { useState } from "react";
 
+const INITIAL_FORM = {
+  full_name: "",
+  firm_name: "",
+  mobile_number: "",
+  email: "",
+  date_of_birth: "",
+  profession: "Architect",
+  marital_status: "unmarried",
+  anniversary_date: "",
+  account_holder_name: "",
+  bank_name: "",
+  account_number: "",
+  ifsc_code: "",
+  upi_id: "",
+};
+
 export default function RegisterPage() {
   const [step, setStep] = useState(1);
-  const [maritalStatus, setMaritalStatus] =
-    useState("unmarried");
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  // -----------------------------
+  // 🔄 CONTROLLED INPUT HANDLER
+  // -----------------------------
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    // Clear error for this field as user types
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  // -----------------------------
+  // 🔐 VALIDATION ENGINE (STEP WISE)
+  // -----------------------------
+  const validateStep = (currentStep) => {
+    const newErrors = {};
+
+    if (currentStep === 1) {
+      if (!form.full_name.trim())
+        newErrors.full_name = "Full name is required";
+
+      if (!form.firm_name.trim())
+        newErrors.firm_name = "Firm name is required";
+
+      if (!form.mobile_number.trim() || form.mobile_number.replace(/\D/g, "").length < 10)
+        newErrors.mobile_number = "Valid mobile number required";
+
+      if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email))
+        newErrors.email = "Email is required";
+    }
+
+    if (currentStep === 2) {
+      if (!form.account_holder_name.trim())
+        newErrors.account_holder_name = "Account holder required";
+
+      if (!form.bank_name.trim())
+        newErrors.bank_name = "Bank name required";
+
+      if (!form.account_number.trim())
+        newErrors.account_number = "Account number required";
+
+      if (!form.ifsc_code.trim())
+        newErrors.ifsc_code = "IFSC code required";
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // -----------------------------
+  // NEXT STEP HANDLER
+  // -----------------------------
+  const handleNext = () => {
+    if (validateStep(1)) {
+      setStep(2);
+    }
+  };
+
+  // -----------------------------
+  // API CALL
+  // -----------------------------
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSuccess(true);
+
+    if (!validateStep(2)) return;
+
+    setLoading(true);
+
+    try {
+      const payload = {
+        full_name: form.full_name,
+        firm_name: form.firm_name,
+        mobile_number: form.mobile_number,
+        email: form.email,
+        date_of_birth: form.date_of_birth || null,
+        profession: form.profession,
+        marital_status: form.marital_status,
+        anniversary_date:
+          form.marital_status === "married" ? (form.anniversary_date || null) : null,
+        account_holder_name: form.account_holder_name,
+        bank_name: form.bank_name,
+        account_number: form.account_number,
+        ifsc_code: form.ifsc_code,
+        upi_id: form.upi_id || null,
+      };
+
+      const res = await fetch("https://api.panvic.in/api/arch-register/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.detail || "Server Error");
+      }
+
+      setSuccess(true);
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <>
       <section className="register">
-
         <div className="register__card">
-
           {/* TOP */}
 
           <div className="register__top">
-
-            <div className="register__icon">
-              ✦
-            </div>
+            <div className="register__icon">✦</div>
 
             <div>
-
-              <h1 className="register__heading">
-                Create Your Account
-              </h1>
+              <h1 className="register__heading">Create Your Account</h1>
 
               <p className="register__subtext">
-                Complete your architect partner
-                registration to access Reward Points,
-                payouts and dashboard features.
+                Complete your architect partner registration to access Reward
+                Points, payouts and dashboard features.
               </p>
 
               {/* PROGRESS */}
 
               <div className="register__progress">
-
                 <div className="register__bar active">
                   <div className="register__bar-fill"></div>
                 </div>
@@ -54,321 +165,277 @@ export default function RegisterPage() {
                 >
                   <div className="register__bar-fill"></div>
                 </div>
-
               </div>
-
             </div>
-
           </div>
 
           {/* SUCCESS */}
 
           {success ? (
-
             <div className="register__success active">
+              <div className="register__success-icon">✓</div>
 
-              <div className="register__success-icon">
-                ✓
-              </div>
-
-              <h2 className="register__success-title">
-                Registration Complete
-              </h2>
+              <h2 className="register__success-title">Registration Complete</h2>
 
               <p className="register__success-text">
-                Your architect partner profile has
-                been submitted successfully.
+                Your architect partner profile has been submitted successfully.
               </p>
-
             </div>
-
           ) : (
-
-            <form onSubmit={handleSubmit}>
-
+            <form onSubmit={handleSubmit} noValidate>
               {/* STEP 1 */}
 
               {step === 1 && (
-
                 <div className="register__step active">
-
                   <div className="register__grid">
-
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Full Name
-                      </label>
+                      <label className="register__label">Full Name</label>
 
                       <input
                         type="text"
+                        name="full_name"
                         className="register__input"
                         placeholder="Enter full name"
+                        value={form.full_name}
+                        onChange={handleChange}
                       />
-
+                      {errors.full_name && (
+                        <p className="error-text">{errors.full_name}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Firm Name
-                      </label>
+                      <label className="register__label">Firm Name</label>
 
                       <input
                         type="text"
+                        name="firm_name"
                         className="register__input"
                         placeholder="Enter firm name"
+                        value={form.firm_name}
+                        onChange={handleChange}
                       />
-
+                      {errors.firm_name && (
+                        <p className="error-text">{errors.firm_name}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Mobile Number
-                      </label>
+                      <label className="register__label">Mobile Number</label>
 
                       <input
                         type="tel"
+                        name="mobile_number"
                         className="register__input"
                         placeholder="+91 9876543210"
+                        value={form.mobile_number}
+                        onChange={handleChange}
                       />
-
+                      {errors.mobile_number && (
+                        <p className="error-text">{errors.mobile_number}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Email Address
-                      </label>
+                      <label className="register__label">Email Address</label>
 
                       <input
                         type="email"
+                        name="email"
                         className="register__input"
                         placeholder="Enter email address"
+                        value={form.email}
+                        onChange={handleChange}
                       />
-
+                      {errors.email && (
+                        <p className="error-text">{errors.email}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Date of Birth
-                      </label>
+                      <label className="register__label">Date of Birth</label>
 
                       <input
                         type="date"
+                        name="date_of_birth"
                         className="register__input"
+                        value={form.date_of_birth}
+                        onChange={handleChange}
                       />
-
                     </div>
 
                     <div className="register__field">
+                      <label className="register__label">Profession</label>
 
-                      <label className="register__label">
-                        Profession
-                      </label>
+                      <select
+                        name="profession"
+                        className="register__select"
+                        value={form.profession}
+                        onChange={handleChange}
+                      >
+                        <option value="Architect">Architect</option>
 
-                      <select className="register__select">
-
-                        <option>
-                          Architect
-                        </option>
-
-                        <option>
-                          Interior Designer
-                        </option>
-
+                        <option value="Interior Designer">Interior Designer</option>
                       </select>
-
                     </div>
 
                     {/* MARITAL */}
 
                     <div className="register__field register__field--full">
-
-                      <label className="register__label">
-                        Marital Status
-                      </label>
+                      <label className="register__label">Marital Status</label>
 
                       <div className="register__radio-wrap">
-
                         <label className="register__radio">
-
                           <input
                             type="radio"
-                            name="marital"
+                            name="marital_status"
                             value="married"
-                            checked={
-                              maritalStatus === "married"
-                            }
-                            onChange={(e) =>
-                              setMaritalStatus(
-                                e.target.value
-                              )
-                            }
+                            checked={form.marital_status === "married"}
+                            onChange={handleChange}
                           />
 
-                          <span>
-                            Married
-                          </span>
-
+                          <span>Married</span>
                         </label>
 
                         <label className="register__radio">
-
                           <input
                             type="radio"
-                            name="marital"
+                            name="marital_status"
                             value="unmarried"
-                            checked={
-                              maritalStatus ===
-                              "unmarried"
-                            }
-                            onChange={(e) =>
-                              setMaritalStatus(
-                                e.target.value
-                              )
-                            }
+                            checked={form.marital_status === "unmarried"}
+                            onChange={handleChange}
                           />
 
-                          <span>
-                            Unmarried
-                          </span>
-
+                          <span>Unmarried</span>
                         </label>
-
                       </div>
-
                     </div>
 
                     {/* ANNIVERSARY */}
 
-                    {maritalStatus === "married" && (
-
+                    {form.marital_status === "married" && (
                       <div className="register__field">
-
                         <label className="register__label">
                           Anniversary Date
                         </label>
 
                         <input
                           type="date"
+                          name="anniversary_date"
                           className="register__input"
+                          value={form.anniversary_date}
+                          onChange={handleChange}
                         />
-
                       </div>
-
                     )}
-
                   </div>
 
                   {/* BUTTON */}
 
                   <div className="register__actions">
-
                     <button
                       type="button"
                       className="register__button"
-                      onClick={() => setStep(2)}
+                      onClick={handleNext}
                     >
                       Continue
                     </button>
-
                   </div>
-
                 </div>
-
               )}
 
               {/* STEP 2 */}
 
               {step === 2 && (
-
                 <div className="register__step active">
-
                   <div className="register__grid">
-
                     <div className="register__field">
-
                       <label className="register__label">
                         Account Holder Name
                       </label>
 
                       <input
                         type="text"
+                        name="account_holder_name"
                         className="register__input"
                         placeholder="Enter account holder name"
+                        value={form.account_holder_name}
+                        onChange={handleChange}
                       />
-
+                      {errors.account_holder_name && (
+                        <p className="error-text">{errors.account_holder_name}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Bank Name
-                      </label>
+                      <label className="register__label">Bank Name</label>
 
                       <input
                         type="text"
+                        name="bank_name"
                         className="register__input"
                         placeholder="Enter bank name"
+                        value={form.bank_name}
+                        onChange={handleChange}
                       />
-
+                      {errors.bank_name && (
+                        <p className="error-text">{errors.bank_name}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        Account Number
-                      </label>
+                      <label className="register__label">Account Number</label>
 
                       <input
                         type="text"
+                        name="account_number"
                         className="register__input"
                         placeholder="Enter account number"
+                        value={form.account_number}
+                        onChange={handleChange}
                       />
-
+                      {errors.account_number && (
+                        <p className="error-text">{errors.account_number}</p>
+                      )}
                     </div>
 
                     <div className="register__field">
-
-                      <label className="register__label">
-                        IFSC Code
-                      </label>
+                      <label className="register__label">IFSC Code</label>
 
                       <input
                         type="text"
+                        name="ifsc_code"
                         className="register__input"
                         placeholder="Enter IFSC code"
+                        value={form.ifsc_code}
+                        onChange={handleChange}
                       />
-
+                      {errors.ifsc_code && (
+                        <p className="error-text">{errors.ifsc_code}</p>
+                      )}
                     </div>
 
                     <div className="register__field register__field--full">
-
-                      <label className="register__label">
-                        UPI ID
-                      </label>
+                      <label className="register__label">UPI ID</label>
 
                       <input
                         type="text"
+                        name="upi_id"
                         className="register__input"
                         placeholder="example@upi"
+                        value={form.upi_id}
+                        onChange={handleChange}
                       />
-
                     </div>
-
                   </div>
 
                   {/* ACTIONS */}
 
                   <div className="register__actions">
-
                     <button
                       type="button"
                       className="register__button register__button--light"
-                      onClick={() => setStep(1)}
+                      onClick={() => { setErrors({}); setStep(1); }}
                     >
                       Back
                     </button>
@@ -376,25 +443,17 @@ export default function RegisterPage() {
                     <button
                       type="submit"
                       className="register__button"
+                      disabled={loading}
                     >
-                      Complete Registration
+                      {loading ? "Submitting..." : "Complete Registration"}
                     </button>
-
                   </div>
-
                 </div>
-
               )}
-
             </form>
-
           )}
-
         </div>
-
       </section>
-
-
     </>
   );
 }
