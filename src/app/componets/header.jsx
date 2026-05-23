@@ -188,7 +188,7 @@ export default function Header() {
                   href="/commissions"
                   className="header__dropdown-link"
                 >
-                  Commissions
+                  Reward Points
                 </a>
 
                 <a
