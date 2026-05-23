@@ -1,24 +1,52 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 export default function Header() {
+  const [open, setOpen] =
+    useState(false);
 
-  const [open, setOpen] = useState(false);
+  // DYNAMIC LOGIN STATE
+  const [isLoggedIn, setIsLoggedIn] =
+    useState(false);
 
   const dropdownRef = useRef(null);
 
+  // -------------------------
+  // CHECK LOGIN
+  // -------------------------
+
   useEffect(() => {
+    const verified =
+      localStorage.getItem(
+        'arch_user_verified'
+      );
 
-    const handleClickOutside = (e) => {
+    if (verified === 'true') {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
+  // -------------------------
+  // OUTSIDE CLICK
+  // -------------------------
+
+  useEffect(() => {
+    const handleClickOutside = (
+      e
+    ) => {
       if (
         dropdownRef.current &&
-        !dropdownRef.current.contains(e.target)
+        !dropdownRef.current.contains(
+          e.target
+        )
       ) {
         setOpen(false);
       }
-
     };
 
     document.addEventListener(
@@ -32,38 +60,48 @@ export default function Header() {
         handleClickOutside
       );
     };
-
   }, []);
 
+  // -------------------------
+  // LOGOUT
+  // -------------------------
+
+  const handleLogout = () => {
+    localStorage.removeItem(
+      'arch_user_verified'
+    );
+
+    setIsLoggedIn(false);
+
+    window.location.href = '/login';
+  };
+
   return (
+    <header className="header">
+      <div className="header__inner">
 
-    <>
-    
-      <header className="header">
+        {/* LOGO */}
 
-        <div className="header__inner">
+        <a
+          href="/"
+          className="header__logo-wrap"
+        >
+          <img
+            src="https://panvik.com/wp-content/uploads/2025/01/logo-removebg-preview.png"
+            alt="Panvik Lighting"
+            className="header__logo"
+          />
+        </a>
 
-          {/* LOGO */}
+        {/* RIGHT */}
 
-          <a
-            href="/"
-            className="header__logo-wrap"
-          >
+        <div className="header__right">
 
-            <img
-              src="https://panvik.com/wp-content/uploads/2025/01/logo-removebg-preview.png"
-              alt="Panvik Lighting"
-              className="header__logo"
-            />
+          {/* -------------------------
+              NOT LOGGED IN
+          ------------------------- */}
 
-          </a>
-
-          {/* RIGHT */}
-
-          <div className="header__right">
-
-            {/* AUTH */}
-
+          {!isLoggedIn && (
             <div className="header__auth">
 
               <a
@@ -81,25 +119,28 @@ export default function Header() {
               </a>
 
             </div>
+          )}
 
-            {/* PROFILE */}
+          {/* -------------------------
+              LOGGED IN
+          ------------------------- */}
 
+          {isLoggedIn && (
             <div
               className="header__profile"
               ref={dropdownRef}
             >
-
               <button
                 className="header__profile-btn"
-                onClick={() => setOpen(!open)}
+                onClick={() =>
+                  setOpen(!open)
+                }
               >
-
                 <div className="header__avatar">
                   S
                 </div>
 
                 <div className="header__profile-info">
-
                   <span className="header__name">
                     Satish
                   </span>
@@ -107,23 +148,28 @@ export default function Header() {
                   <span className="header__role">
                     Architect
                   </span>
-
                 </div>
 
-                <span className="header__arrow">
+                <span
+                  className={`header__arrow ${
+                    open
+                      ? 'active'
+                      : ''
+                  }`}
+                >
                   ⌄
                 </span>
-
               </button>
 
               {/* DROPDOWN */}
 
               <div
                 className={`header__dropdown ${
-                  open ? 'active' : ''
+                  open
+                    ? 'active'
+                    : ''
                 }`}
               >
-
                 <a
                   href="/profile"
                   className="header__dropdown-link"
@@ -152,25 +198,19 @@ export default function Header() {
                   Settings
                 </a>
 
-                <a
-                  href="/logout"
+                <button
+                  onClick={
+                    handleLogout
+                  }
                   className="header__dropdown-link header__dropdown-link--logout"
                 >
                   Logout
-                </a>
-
+                </button>
               </div>
-
             </div>
-
-          </div>
-
+          )}
         </div>
-
-      </header>
-
-    </>
-
+      </div>
+    </header>
   );
-
 }
