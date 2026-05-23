@@ -1,11 +1,13 @@
+
 'use client';
 
 import { useState } from 'react';
 
 export default function LoginPage() {
+  const [step, setStep] = useState(1);
 
-  const [step, setStep] = useState(1); 
-  // 1 = email, 2 = otp
+  // 1 = email
+  // 2 = otp
 
   const [email, setEmail] = useState('');
   const [otp, setOtp] = useState('');
@@ -13,6 +15,10 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // API BASE URL
+  const API_BASE =
+    'https://api.panvic.in/api';
 
   // -------------------------
   // SEND OTP
@@ -25,27 +31,42 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        'https://api.panvic.in/api/arch-auth/send-otp/',
+        `${API_BASE}/arch-auth/send-otp`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':
+              'application/json',
           },
-          body: JSON.stringify({ email }),
+          body: JSON.stringify({
+            email,
+          }),
         }
       );
 
-      const data = await res.json();
-      console.log(data);
+      // handle non-json response
+      const data = await res
+        .json()
+        .catch(() => ({}));
+
+      console.log('SEND OTP:', data);
 
       if (!res.ok) {
-        throw new Error(data.detail || 'Failed to send OTP');
+        throw new Error(
+          data.detail ||
+            data.message ||
+            'Failed to send OTP'
+        );
       }
 
       setStep(2);
-
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+
+      setError(
+        err.message ||
+          'Something went wrong'
+      );
     } finally {
       setLoading(false);
     }
@@ -63,11 +84,12 @@ export default function LoginPage() {
 
     try {
       const res = await fetch(
-        'https://api.panvic.in/api/arch-auth/verify-otp/',
+        `${API_BASE}/arch-auth/verify-otp`,
         {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json',
+            'Content-Type':
+              'application/json',
           },
           body: JSON.stringify({
             email,
@@ -76,21 +98,42 @@ export default function LoginPage() {
         }
       );
 
-      const data = await res.json();
-      console.log(data);
+      // handle non-json response
+      const data = await res
+        .json()
+        .catch(() => ({}));
+
+      console.log(
+        'VERIFY OTP:',
+        data
+      );
+
       if (!res.ok) {
-        throw new Error(data.detail || 'Invalid OTP');
+        throw new Error(
+          data.detail ||
+            data.message ||
+            'Invalid OTP'
+        );
       }
 
       setSuccess(true);
 
-      // optional redirect after login
-      localStorage.setItem('arch_user_verified', 'true');
+      // save login
+      localStorage.setItem(
+        'arch_user_verified',
+        'true'
+      );
 
-      // window.location.href = "/dashboard";
-
+      // optional redirect
+      // window.location.href =
+      //   '/dashboard';
     } catch (err) {
-      setError(err.message);
+      console.error(err);
+
+      setError(
+        err.message ||
+          'Something went wrong'
+      );
     } finally {
       setLoading(false);
     }
@@ -99,10 +142,11 @@ export default function LoginPage() {
   return (
     <section className="login">
       <div className="login__card">
-
         {/* TOP */}
         <div className="login__top">
-          <div className="login__icon">⌁</div>
+          <div className="login__icon">
+            ⌁
+          </div>
 
           <div>
             <h1 className="login__heading">
@@ -110,7 +154,8 @@ export default function LoginPage() {
             </h1>
 
             <p className="login__subtext">
-              Enter your email and verify OTP to continue.
+              Enter your email and
+              verify OTP to continue.
             </p>
           </div>
         </div>
@@ -129,10 +174,12 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* STEP 1 → EMAIL */}
+        {/* STEP 1 */}
         {step === 1 && (
-          <form onSubmit={sendOtp} className="login__form">
-
+          <form
+            onSubmit={sendOtp}
+            className="login__form"
+          >
             <div className="login__field">
               <label className="login__label">
                 Email Address
@@ -144,7 +191,9 @@ export default function LoginPage() {
                 placeholder="Enter email address"
                 value={email}
                 onChange={(e) =>
-                  setEmail(e.target.value)
+                  setEmail(
+                    e.target.value
+                  )
                 }
                 required
               />
@@ -155,16 +204,19 @@ export default function LoginPage() {
               disabled={loading}
               type="submit"
             >
-              {loading ? 'Sending OTP...' : 'Send OTP'}
+              {loading
+                ? 'Sending OTP...'
+                : 'Send OTP'}
             </button>
-
           </form>
         )}
 
-        {/* STEP 2 → OTP VERIFY */}
+        {/* STEP 2 */}
         {step === 2 && (
-          <form onSubmit={verifyOtp} className="login__form">
-
+          <form
+            onSubmit={verifyOtp}
+            className="login__form"
+          >
             <div className="login__field">
               <label className="login__label">
                 Enter OTP
@@ -176,7 +228,9 @@ export default function LoginPage() {
                 placeholder="6-digit OTP"
                 value={otp}
                 onChange={(e) =>
-                  setOtp(e.target.value)
+                  setOtp(
+                    e.target.value
+                  )
                 }
                 maxLength={6}
                 required
@@ -188,29 +242,36 @@ export default function LoginPage() {
               disabled={loading}
               type="submit"
             >
-              {loading ? 'Verifying...' : 'Verify OTP'}
+              {loading
+                ? 'Verifying...'
+                : 'Verify OTP'}
             </button>
 
-            {/* BACK BUTTON */}
             <button
               type="button"
               className="login__button login__button--light"
-              onClick={() => setStep(1)}
-              style={{ marginTop: '10px' }}
+              onClick={() =>
+                setStep(1)
+              }
+              style={{
+                marginTop: '10px',
+              }}
             >
               Change Email
             </button>
-
           </form>
         )}
 
         {/* BOTTOM */}
         <div className="login__bottom">
           Don’t have an account?
-          <a href="/register"> Register Now</a>
+          <a href="/register">
+            {' '}
+            Register Now
+          </a>
         </div>
-
       </div>
     </section>
   );
 }
+
