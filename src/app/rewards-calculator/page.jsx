@@ -166,7 +166,7 @@ export default function RewardsPage() {
           <input
             type="range"
             min="100000"
-            max="100000000"
+            max="99999999"
             step="100000"
             value={amount}
             onChange={(e) =>
