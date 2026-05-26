@@ -189,6 +189,11 @@ export default function Header() {
                   className="header__dropdown-link"
                 >
                   Reward Points
+                </a>    <a
+                  href="/myprojetcts"
+                  className="header__dropdown-link"
+                >
+                  My Projetcts
                 </a>
 
                 <a
