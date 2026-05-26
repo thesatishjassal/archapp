@@ -256,7 +256,7 @@ export default function RewardsPage() {
         ? 50000000
         : item.target === "7.5M"
         ? 75000000
-        : 100000000
+        : 99999999
     )
       ? "active"
       : ""
