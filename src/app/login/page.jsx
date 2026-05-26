@@ -110,14 +110,12 @@ export default function LoginPage() {
       <div className="login__card">
         {/* TOP */}
         <div className="login__top">
-          <div className="login__icon">⌁</div>
-
           <div>
             <h1 className="login__heading">Login with OTP</h1>
 
-            <p className="login__subtext">
+            {/* <p className="login__subtext">
               Enter your email and verify OTP to continue.
-            </p>
+            </p> */}
           </div>
         </div>
 
@@ -133,11 +131,7 @@ export default function LoginPage() {
 
           <div>
             <div className="login__otpTitle">
-              OTP Sent Successfully
-            </div>
-
-            <div className="login__otpSub">
-              Check your email inbox
+              OTP Sent to your email inbox
             </div>
           </div>
         </div>

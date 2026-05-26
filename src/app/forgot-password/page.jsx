@@ -26,9 +26,6 @@ export default function ForgotPasswordPage() {
 
           <div className="forgot__top">
 
-            <div className="forgot__icon">
-              ↺
-            </div>
 
             <div>
 

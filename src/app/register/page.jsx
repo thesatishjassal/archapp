@@ -20,7 +20,8 @@ const INITIAL_FORM = {
 
 export default function RegisterPage() {
 
-  const [step, setStep] = useState(1);
+  const [step, setStep] =
+    useState(1);
 
   const [form, setForm] =
     useState(INITIAL_FORM);
@@ -34,8 +35,36 @@ export default function RegisterPage() {
   const [loading, setLoading] =
     useState(false);
 
-  const [apiError, setApiError] =
-    useState("");
+  const [alert, setAlert] =
+    useState({
+      type: "",
+      message: "",
+    });
+
+  // -----------------------------
+  // ALERT
+  // -----------------------------
+
+  const showAlert = (
+    type,
+    message
+  ) => {
+
+    setAlert({
+      type,
+      message,
+    });
+
+    setTimeout(() => {
+
+      setAlert({
+        type: "",
+        message: "",
+      });
+
+    }, 3000);
+
+  };
 
   // -----------------------------
   // INPUT CHANGE
@@ -51,7 +80,6 @@ export default function RegisterPage() {
       [name]: value,
     }));
 
-    // REMOVE FIELD ERROR
     if (errors[name]) {
 
       setErrors((prev) => ({
@@ -80,14 +108,14 @@ export default function RegisterPage() {
       if (!form.full_name.trim()) {
 
         newErrors.full_name =
-          "Full name is required";
+          "Required";
 
       }
 
       if (!form.firm_name.trim()) {
 
         newErrors.firm_name =
-          "Firm name is required";
+          "Required";
 
       }
 
@@ -100,7 +128,7 @@ export default function RegisterPage() {
       ) {
 
         newErrors.mobile_number =
-          "Valid mobile number required";
+          "Invalid number";
 
       }
 
@@ -112,7 +140,7 @@ export default function RegisterPage() {
       ) {
 
         newErrors.email =
-          "Valid email required";
+          "Invalid email";
 
       }
 
@@ -127,14 +155,14 @@ export default function RegisterPage() {
       ) {
 
         newErrors.account_holder_name =
-          "Account holder name required";
+          "Required";
 
       }
 
       if (!form.bank_name.trim()) {
 
         newErrors.bank_name =
-          "Bank name required";
+          "Required";
 
       }
 
@@ -143,14 +171,14 @@ export default function RegisterPage() {
       ) {
 
         newErrors.account_number =
-          "Account number required";
+          "Required";
 
       }
 
       if (!form.ifsc_code.trim()) {
 
         newErrors.ifsc_code =
-          "IFSC code required";
+          "Required";
 
       }
 
@@ -166,14 +194,26 @@ export default function RegisterPage() {
   };
 
   // -----------------------------
-  // NEXT STEP
+  // NEXT
   // -----------------------------
 
   const handleNext = () => {
 
     if (validateStep(1)) {
 
+      showAlert(
+        "success",
+        "Step completed"
+      );
+
       setStep(2);
+
+    } else {
+
+      showAlert(
+        "error",
+        "Please complete required fields"
+      );
 
     }
 
@@ -189,11 +229,18 @@ export default function RegisterPage() {
 
     e.preventDefault();
 
-    if (!validateStep(2)) return;
+    if (!validateStep(2)) {
+
+      showAlert(
+        "error",
+        "Please complete required fields"
+      );
+
+      return;
+
+    }
 
     setLoading(true);
-
-    setApiError("");
 
     try {
 
@@ -265,11 +312,6 @@ export default function RegisterPage() {
         .json()
         .catch(() => ({}));
 
-      console.log(
-        "REGISTER RESPONSE:",
-        data
-      );
-
       if (!res.ok) {
 
         throw new Error(
@@ -280,22 +322,17 @@ export default function RegisterPage() {
 
       }
 
-      // -----------------------------
-      // SUCCESS UI
-      // -----------------------------
-
       setSuccess(true);
 
-      // -----------------------------
-      // AUTO LOGIN
-      // -----------------------------
+      showAlert(
+        "success",
+        "Registration successful"
+      );
 
       localStorage.setItem(
         "arch_user_verified",
         "true"
       );
-
-      // SAVE USER DATA
 
       localStorage.setItem(
         "arch_user",
@@ -311,10 +348,6 @@ export default function RegisterPage() {
         })
       );
 
-      // -----------------------------
-      // REDIRECT
-      // -----------------------------
-
       setTimeout(() => {
 
         window.location.href =
@@ -326,7 +359,8 @@ export default function RegisterPage() {
 
       console.error(err);
 
-      setApiError(
+      showAlert(
+        "error",
         err.message ||
           "Something went wrong"
       );
@@ -343,15 +377,29 @@ export default function RegisterPage() {
 
     <section className="register">
 
+      {/* ALERT */}
+
+      {alert.message && (
+
+        <div
+          className={`register__toast register__toast--${alert.type}`}
+        >
+
+          <div className="register__toast-dot"></div>
+
+          <span>
+            {alert.message}
+          </span>
+
+        </div>
+
+      )}
+
       <div className="register__card">
 
         {/* TOP */}
 
         <div className="register__top">
-
-          <div className="register__icon">
-            ✦
-          </div>
 
           <div>
 
@@ -362,9 +410,8 @@ export default function RegisterPage() {
             <p className="register__subtext">
               Complete your architect
               partner registration to
-              access dashboard,
-              rewards and profile
-              features.
+              access dashboard and
+              rewards.
             </p>
 
             {/* PROGRESS */}
@@ -378,7 +425,7 @@ export default function RegisterPage() {
               </div>
 
               <div
-                className={`register__bar register__bar--2 ${
+                className={`register__bar ${
                   step === 2
                     ? "active"
                     : ""
@@ -395,18 +442,6 @@ export default function RegisterPage() {
 
         </div>
 
-        {/* ERROR ALERT */}
-
-        {apiError && (
-
-          <div className="register__alert register__alert--error">
-
-            {apiError}
-
-          </div>
-
-        )}
-
         {/* SUCCESS */}
 
         {success ? (
@@ -422,14 +457,9 @@ export default function RegisterPage() {
             </h2>
 
             <p className="register__success-text">
-              Your architect profile
-              has been created
-              successfully.
+              Redirecting to your
+              profile...
             </p>
-
-            <div className="register__redirect">
-              Redirecting to profile...
-            </div>
 
           </div>
 
@@ -452,15 +482,15 @@ export default function RegisterPage() {
 
                   <div className="register__field">
 
-                    <label className="register__label">
-                      Full Name
-                    </label>
-
                     <input
                       type="text"
                       name="full_name"
-                      className="register__input"
-                      placeholder="Enter full name"
+                      className={`register__input ${
+                        errors.full_name
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Full Name"
                       value={
                         form.full_name
                       }
@@ -469,29 +499,21 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.full_name && (
-                      <p className="error-text">
-                        {
-                          errors.full_name
-                        }
-                      </p>
-                    )}
-
                   </div>
 
                   {/* FIRM */}
 
                   <div className="register__field">
 
-                    <label className="register__label">
-                      Firm Name
-                    </label>
-
                     <input
                       type="text"
                       name="firm_name"
-                      className="register__input"
-                      placeholder="Enter firm name"
+                      className={`register__input ${
+                        errors.firm_name
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Firm Name"
                       value={
                         form.firm_name
                       }
@@ -500,29 +522,21 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.firm_name && (
-                      <p className="error-text">
-                        {
-                          errors.firm_name
-                        }
-                      </p>
-                    )}
-
                   </div>
 
                   {/* MOBILE */}
 
                   <div className="register__field">
 
-                    <label className="register__label">
-                      Mobile Number
-                    </label>
-
                     <input
                       type="tel"
                       name="mobile_number"
-                      className="register__input"
-                      placeholder="+91 9876543210"
+                      className={`register__input ${
+                        errors.mobile_number
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Mobile Number"
                       value={
                         form.mobile_number
                       }
@@ -531,29 +545,21 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.mobile_number && (
-                      <p className="error-text">
-                        {
-                          errors.mobile_number
-                        }
-                      </p>
-                    )}
-
                   </div>
 
                   {/* EMAIL */}
 
                   <div className="register__field">
 
-                    <label className="register__label">
-                      Email Address
-                    </label>
-
                     <input
                       type="email"
                       name="email"
-                      className="register__input"
-                      placeholder="Enter email address"
+                      className={`register__input ${
+                        errors.email
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Email Address"
                       value={
                         form.email
                       }
@@ -562,23 +568,11 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.email && (
-                      <p className="error-text">
-                        {
-                          errors.email
-                        }
-                      </p>
-                    )}
-
                   </div>
 
                   {/* DOB */}
 
                   <div className="register__field">
-
-                    <label className="register__label">
-                      Date of Birth
-                    </label>
 
                     <input
                       type="date"
@@ -597,10 +591,6 @@ export default function RegisterPage() {
                   {/* PROFESSION */}
 
                   <div className="register__field">
-
-                    <label className="register__label">
-                      Profession
-                    </label>
 
                     <select
                       name="profession"
@@ -628,10 +618,6 @@ export default function RegisterPage() {
                   {/* MARITAL */}
 
                   <div className="register__field register__field--full">
-
-                    <label className="register__label">
-                      Marital Status
-                    </label>
 
                     <div className="register__radio-wrap">
 
@@ -688,10 +674,6 @@ export default function RegisterPage() {
 
                     <div className="register__field">
 
-                      <label className="register__label">
-                        Anniversary Date
-                      </label>
-
                       <input
                         type="date"
                         name="anniversary_date"
@@ -709,8 +691,6 @@ export default function RegisterPage() {
                   )}
 
                 </div>
-
-                {/* ACTION */}
 
                 <div className="register__actions">
 
@@ -738,19 +718,17 @@ export default function RegisterPage() {
 
                 <div className="register__grid">
 
-                  {/* ACCOUNT HOLDER */}
-
                   <div className="register__field">
-
-                    <label className="register__label">
-                      Account Holder Name
-                    </label>
 
                     <input
                       type="text"
                       name="account_holder_name"
-                      className="register__input"
-                      placeholder="Enter account holder name"
+                      className={`register__input ${
+                        errors.account_holder_name
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Account Holder Name"
                       value={
                         form.account_holder_name
                       }
@@ -759,29 +737,19 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.account_holder_name && (
-                      <p className="error-text">
-                        {
-                          errors.account_holder_name
-                        }
-                      </p>
-                    )}
-
                   </div>
 
-                  {/* BANK */}
-
                   <div className="register__field">
-
-                    <label className="register__label">
-                      Bank Name
-                    </label>
 
                     <input
                       type="text"
                       name="bank_name"
-                      className="register__input"
-                      placeholder="Enter bank name"
+                      className={`register__input ${
+                        errors.bank_name
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Bank Name"
                       value={
                         form.bank_name
                       }
@@ -790,29 +758,19 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.bank_name && (
-                      <p className="error-text">
-                        {
-                          errors.bank_name
-                        }
-                      </p>
-                    )}
-
                   </div>
 
-                  {/* ACCOUNT NUMBER */}
-
                   <div className="register__field">
-
-                    <label className="register__label">
-                      Account Number
-                    </label>
 
                     <input
                       type="text"
                       name="account_number"
-                      className="register__input"
-                      placeholder="Enter account number"
+                      className={`register__input ${
+                        errors.account_number
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="Account Number"
                       value={
                         form.account_number
                       }
@@ -821,29 +779,19 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.account_number && (
-                      <p className="error-text">
-                        {
-                          errors.account_number
-                        }
-                      </p>
-                    )}
-
                   </div>
 
-                  {/* IFSC */}
-
                   <div className="register__field">
-
-                    <label className="register__label">
-                      IFSC Code
-                    </label>
 
                     <input
                       type="text"
                       name="ifsc_code"
-                      className="register__input"
-                      placeholder="Enter IFSC code"
+                      className={`register__input ${
+                        errors.ifsc_code
+                          ? "input-error"
+                          : ""
+                      }`}
+                      placeholder="IFSC Code"
                       value={
                         form.ifsc_code
                       }
@@ -852,29 +800,15 @@ export default function RegisterPage() {
                       }
                     />
 
-                    {errors.ifsc_code && (
-                      <p className="error-text">
-                        {
-                          errors.ifsc_code
-                        }
-                      </p>
-                    )}
-
                   </div>
 
-                  {/* UPI */}
-
                   <div className="register__field register__field--full">
-
-                    <label className="register__label">
-                      UPI ID
-                    </label>
 
                     <input
                       type="text"
                       name="upi_id"
                       className="register__input"
-                      placeholder="example@upi"
+                      placeholder="UPI ID"
                       value={
                         form.upi_id
                       }
@@ -886,8 +820,6 @@ export default function RegisterPage() {
                   </div>
 
                 </div>
-
-                {/* ACTIONS */}
 
                 <div className="register__actions">
 
