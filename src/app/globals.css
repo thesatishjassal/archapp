@@ -3821,4 +3821,347 @@ body {
     font-size: 22px;
   }
 
+}.rewardSlim {
+
+  width: 100%;
+
+  min-height: 100vh;
+
+  background: #fafafa;
+
+  padding: 26px 18px;
+}
+
+.rewardSlim__container {
+
+  width: 100%;
+
+  max-width: 1100px;
+
+  margin: auto;
+}
+
+/* TOP */
+
+.rewardSlim__top {
+
+  display: flex;
+
+  align-items: flex-start;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 24px;
+}
+
+.rewardSlim__tag {
+
+  height: 30px;
+
+  padding: 0 12px;
+
+  border-radius: 999px;
+
+  background: #fff;
+
+  border: 1px solid #ececec;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  margin-bottom: 16px;
+}
+
+.rewardSlim__title {
+    color: #111;
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 1.05;
+}
+
+.rewardSlim__mini {
+
+  background: #fff;
+
+  border: 1px solid #efefef;
+
+  border-radius: 20px;
+
+  padding: 18px 20px;
+
+  min-width: 130px;
+}
+
+.rewardSlim__mini h3 {
+
+  font-size: 26px;
+
+  font-weight: 700;
+
+  margin-bottom: 6px;
+}
+
+.rewardSlim__mini p {
+
+  font-size: 12px;
+
+  color: #777;
+}
+
+/* CALC */
+
+.rewardCalc {
+
+  background: #fff;
+
+  border: 1px solid #efefef;
+
+  border-radius: 26px;
+
+  padding: 20px;
+
+  margin-bottom: 18px;
+}
+
+.rewardCalc__top {
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 20px;
+
+  margin-bottom: 24px;
+}
+
+.rewardCalc__top span {
+
+  font-size: 11px;
+
+  text-transform: uppercase;
+
+  color: #888;
+
+  letter-spacing: .08em;
+}
+
+.rewardCalc__top h2 {
+
+  font-size: 34px;
+
+  font-weight: 700;
+
+  margin-top: 10px;
+}
+
+.rewardCalc__points {
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  font-size: 24px;
+
+  font-weight: 700;
+}
+
+.rewardCalc__points span {
+
+  font-size: 11px;
+
+  color: #888;
+
+  margin-top: 4px;
+}
+
+/* RANGE */
+
+.rewardCalc__range {
+
+  width: 100%;
+
+  margin-bottom: 24px;
+}
+
+/* GRID */
+
+.rewardCalc__grid {
+
+  display: grid;
+
+  grid-template-columns:
+    repeat(3,1fr);
+
+  gap: 14px;
+}
+
+.rewardCalc__card {
+
+  border: 1px solid #efefef;
+
+  border-radius: 20px;
+
+  padding: 16px;
+}
+
+.rewardCalc__card span {
+
+  font-size: 11px;
+
+  color: #888;
+
+  text-transform: uppercase;
+}
+
+.rewardCalc__card h3 {
+
+  font-size: 24px;
+
+  font-weight: 700;
+
+  margin-top: 10px;
+}
+
+.rewardCalc__card--active {
+
+  background: #111;
+
+  color: #fff;
+
+  border: none;
+}
+
+.rewardCalc__card--active span {
+
+  color: rgba(255,255,255,0.7);
+}
+
+/* LEVELS */
+
+.rewardLevels {
+    flex-direction: column;
+    gap: 10px;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.rewardLevels__row {
+
+  background: #fff;
+
+  border: 1px solid #efefef;
+
+  border-radius: 18px;
+
+  padding: 16px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+}
+
+.rewardLevels__row h4 {
+
+  font-size: 18px;
+
+  font-weight: 700;
+
+  color: #111;
+
+  margin-bottom: 4px;
+}
+
+.rewardLevels__row p {
+
+  font-size: 11px;
+
+  color: #888;
+
+  text-transform: uppercase;
+}
+
+/* MOBILE */
+
+@media (max-width: 768px) {
+
+  .rewardSlim__top {
+
+    flex-direction: column;
+  }
+
+  .rewardSlim__title {
+
+    font-size: 32px;
+  }
+
+
+
+  .rewardCalc__top {
+
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .rewardCalc__points {
+
+    align-items: flex-start;
+  }
+
+  .rewardCalc__grid {
+
+    grid-template-columns: 1fr;
+  }
+
+}.rewardLevels__row {
+
+  background: #fff;
+
+  border: 1px solid #efefef;
+
+  border-radius: 18px;
+
+  padding: 16px 18px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  transition: .25s ease;
+}
+
+/* ACTIVE */
+
+.rewardLevels__row.active {
+
+  background: #111;
+
+  border-color: #111;
+
+  transform: scale(1.01);
+}
+
+.rewardLevels__row.active h4 {
+
+  color: #fff;
+}
+
+.rewardLevels__row.active p {
+
+  color: rgba(255,255,255,0.65);
 }
