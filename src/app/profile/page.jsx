@@ -4,129 +4,11 @@ import { useEffect, useState } from "react";
 
 export default function ProfilePage() {
   /* ================= MODALS ================= */
-  const [editProjectModal, setEditProjectModal] =
-    useState(false);
+  const [editProjectModal, setEditProjectModal] = useState(false);
 
-  const [editingProjectId, setEditingProjectId] =
-    useState(null);
+  const [editingProjectId, setEditingProjectId] = useState(null);
   const [showEditModal, setShowEditModal] = useState(false);
-const [detailsModal, setDetailsModal] =
-  useState(false);
-
-const [activeCategory, setActiveCategory] =
-  useState("");
-  const [open, setOpen] = useState(false);
-const [projects, setProjects] =
-  useState([
-    {
-      id: 1,
-      title:
-        "Modern Courtyard Villa",
-
-      location:
-        "Gurgaon, India",
-
-      description:
-        "Luxury residential villa focused on open courtyard living, natural ventilation and soft minimal interiors.",
-
-      status:
-        "Completed",
-
-      image:
-        "https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1400&auto=format&fit=crop",
-    },
-
-    {
-      id: 2,
-      title:
-        "Skyline Workspace",
-
-      location:
-        "Bangalore, India",
-
-      description:
-        "Contemporary office workspace designed with collaborative zones, natural light and sustainable materials.",
-
-      status:
-        "In Progress",
-
-      image:
-        "https://images.unsplash.com/photo-1497366754035-f200968a6e72?q=80&w=1400&auto=format&fit=crop",
-    },
-
-    {
-      id: 3,
-      title:
-        "Minimal Lake House",
-
-      location:
-        "Udaipur, India",
-
-      description:
-        "Calm waterfront retreat designed using exposed concrete, wood textures and panoramic lake-facing glazing.",
-
-      status:
-        "Completed",
-
-      image:
-        "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?q=80&w=1400&auto=format&fit=crop",
-    },
-
-    {
-      id: 4,
-      title:
-        "Urban Green Residence",
-
-      location:
-        "Noida, India",
-
-      description:
-        "Smart eco-friendly home integrating vertical gardens, passive cooling and functional family spaces.",
-
-      status:
-        "In Progress",
-
-      image:
-        "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?q=80&w=1400&auto=format&fit=crop",
-    },
-
-    {
-      id: 5,
-      title:
-        "Luxury Penthouse Interior",
-
-      location:
-        "Mumbai, India",
-
-      description:
-        "High-end penthouse interior blending soft lighting, premium marble finishes and modern spatial flow.",
-
-      status:
-        "Completed",
-
-      image:
-        "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?q=80&w=1400&auto=format&fit=crop",
-    },
-
-    {
-      id: 6,
-      title:
-        "Nature Inspired Café",
-
-      location:
-        "Chandigarh, India",
-
-      description:
-        "Biophilic café concept with earthy textures, indoor greens and a warm community-centered layout.",
-
-      status:
-        "Completed",
-
-      image:
-        "https://images.unsplash.com/photo-1554995207-c18c203602cb?q=80&w=1400&auto=format&fit=crop",
-    },
-  ]);
-  /* ================= PROFILE STATE ================= */
+  const [detailsModal, setDetailsModal] = useState(false);
 
   const [profileData, setProfileData] = useState({
     name: "",
@@ -134,29 +16,74 @@ const [projects, setProjects] =
     work: "",
     bio: "",
     location: "India",
-    profileImage:
-      "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop",
+
+    profileImage: "",
+
     email: "",
     mobile: "",
     dob: "",
+
     firm_name: "",
     marital_status: "",
+
     bank_name: "",
+
+    account_holder_name: "",
+
+    account_number: "",
+
+    ifsc_code: "",
+
     upi_id: "",
   });
+  const [activeCategory, setActiveCategory] = useState("");
+  const [open, setOpen] = useState(false);
+  const [projects, setProjects] = useState([]);
+  /* ================= PROFILE STATE =================' */
+  const [openAccordion, setOpenAccordion] = useState("personal");
+  const [architectId, setArchitectId] = useState(null);
+  // const [projects, setProjects] = useState([]);
+  const toggleAccordion = (section) => {
+    setOpenAccordion(openAccordion === section ? null : section);
+  };
 
+  const fetchProjects = async (id) => {
+    try {
+      const res = await fetch(`https://api.panvic.in/api/projects/${id}`);
+
+      const result = await res.json();
+      console.log("Fetched projects:", result);
+if (result.success) {
+        setProjects(result.data.map((item) => ({
+          id: item.id,
+          title: item.title,
+          location: item.location,
+          description: item.description,
+          status: item.status,
+          image: item.image_url,
+          client: item.client,
+          budget: item.budget,
+          date: item.date,
+        })));
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
+  //   const currentUser = result.data.find(
+  //   (user) => user.email === localUser.email
+  // );
+
+  // if (!currentUser) return;
+
+  // setArchitectId(currentUser.id);
   /* ================= FETCH USER ================= */
-const openCategoryModal = (
-  category
-) => {
+  const openCategoryModal = (category) => {
+    setActiveCategory(category);
 
-  setActiveCategory(
-    category
-  );
-
-  setDetailsModal(true);
-
-};
+    setDetailsModal(true);
+  };
   useEffect(() => {
     const fetchCurrentUser = async () => {
       try {
@@ -166,40 +93,55 @@ const openCategoryModal = (
 
         const res = await fetch("https://api.panvic.in/api/arch-register/");
 
-        const data = await res.json();
+        const result = await res.json();
 
-        const currentUser = data.find((user) => user.email === localUser.email);
+        if (!result.success) return;
 
-        if (currentUser) {
-          setProfileData({
-            name: currentUser.full_name || "",
+        const currentUser = result.data.find(
+          (user) => user.email === localUser.email
+        );
 
-            profession: currentUser.profession || "",
+        if (!currentUser) return;
 
-            work: currentUser.firm_name || "",
+        setArchitectId(currentUser.id);
 
-            bio: "Minimal architect focused on elegant and modern living spaces.",
+        fetchProjects(currentUser.id);
 
-            location: "India",
+        // setProfileData({
+        setProfileData({
+          name: currentUser.full_name || "",
 
-            profileImage:
-              "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop",
+          profession: currentUser.profession || "",
 
-            email: currentUser.email || "",
+          work: currentUser.firm_name || "",
 
-            mobile: currentUser.mobile_number || "",
+          bio: "Minimal architect focused on elegant and modern living spaces.",
 
-            dob: currentUser.date_of_birth || "",
+          location: "India",
 
-            firm_name: currentUser.firm_name || "",
+          profileImage:
+            "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=800&auto=format&fit=crop",
 
-            marital_status: currentUser.marital_status || "",
+          email: currentUser.email || "",
 
-            bank_name: currentUser.bank_name || "",
+          mobile: currentUser.mobile_number || "",
 
-            upi_id: currentUser.upi_id || "",
-          });
-        }
+          dob: currentUser.date_of_birth || "",
+
+          firm_name: currentUser.firm_name || "",
+
+          marital_status: currentUser.marital_status || "",
+
+          bank_name: currentUser.bank_name || "",
+
+          account_holder_name: currentUser.account_holder_name || "",
+
+          account_number: currentUser.account_number || "",
+
+          ifsc_code: currentUser.ifsc_code || "",
+
+          upi_id: currentUser.upi_id || "",
+        });
       } catch (err) {
         console.log(err);
       }
@@ -278,95 +220,138 @@ const openCategoryModal = (
 
   /* ================= SAVE PROJECT ================= */
 
-const handleAddProject = (
-  e
-) => {
+  const handleAddProject = async (e) => {
+    e.preventDefault();
 
-  e.preventDefault();
+    try {
+      // const payload = {
+      //   title: projectForm.title,
+      //   location: projectForm.location,
+      //   description: projectForm.description,
+      //   status: projectForm.status,
+      //   image_url: projectForm.image,
+      // };
+      const formData = new FormData();
+      formData.append("title", projectForm.title);
+      formData.append("location", projectForm.location || "");
+      formData.append("description", projectForm.description || "");
+      formData.append("status", projectForm.status);
+formData.append("client", projectForm.client || "");
+    formData.append("budget", projectForm.budget || "");
+    formData.append("date", projectForm.date || "");
+      if (projectForm.imageFile) {
+        formData.append("image", projectForm.imageFile);
+      }
 
-  // UPDATE EXISTING
+      const res = await fetch(
+        `https://api.panvic.in/api/projects/${architectId}`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+      // const res = await fetch(
+      //   `https://api.panvic.in/api/projects/${architectId}`,
+      //   {
+      //     method: "POST",
+      //     headers: {
+      //       "Content-Type": "application/json",
+      //     },
+      //     body: JSON.stringify(payload),
+      //   }
+      // );
 
-  if (editingProjectId) {
+      const result = await res.json();
 
-    setProjects((prev) =>
-      prev.map((project) =>
+      if (result.success) {
+        fetchProjects(architectId);
 
-        project.id ===
-        editingProjectId
-          ? {
-              ...project,
-              ...projectForm,
-            }
-          : project
-      )
-    );
+        setOpen(false);
 
-    setEditingProjectId(
-      null
-    );
+        setProjectForm({
+          title: "",
+          location: "",
+          description: "",
+          status: "In Progress",
+          image: "",
+        });
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  const handleEditProject = (project) => {
+setProjectForm({
+      title: project.title || "",
+      location: project.location || "",
+      description: project.description || "",
+      status: project.status || "In Progress",
+      image: project.image || "",
+      imageFile: null,
+      client: project.client || "",
+      budget: project.budget || "",
+      date: project.date || "",
+    });
+    setEditingProjectId(project.id); // ← Must set this
+    setEditProjectModal(true);
+  };
 
-    setEditProjectModal(
-      false
-    );
+  const handleUpdateProject = async (e) => {
+    e.preventDefault();
+    if (!architectId || !editingProjectId) return;
 
-  } else {
+    const formData = new FormData();
+    formData.append("title", projectForm.title);
+    formData.append("location", projectForm.location || "");
+    formData.append("description", projectForm.description || "");
+    formData.append("status", projectForm.status);
+    formData.append("client", projectForm.client || "");
+    formData.append("budget", projectForm.budget || "");
+    formData.append("date", projectForm.date || "");
 
-    // ADD NEW
+    if (projectForm.imageFile) formData.append("image", projectForm.imageFile);
 
-    const newProject = {
-      id: Date.now(),
-      ...projectForm,
-    };
+    try {
+      const res = await fetch(
+        `https://api.panvic.in/api/projects/${architectId}/${editingProjectId}`,
+        { method: "PUT", body: formData }
+      );
 
-    setProjects(
-      (prev) => [
-        newProject,
-        ...prev,
-      ]
-    );
+      const result = await res.json();
+      if (result.success) {
+        fetchProjects(architectId);
+        setEditProjectModal(false);
+        setEditingProjectId(null);
+        resetProjectForm();
+        alert("Project updated successfully!");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    setOpen(false);
+  const handleDeleteProject = async (projectId) => {
+    const confirmDelete = window.confirm("Delete this project?");
 
-  }
+    if (!confirmDelete) return;
 
-  // RESET FORM
+    try {
+      const res = await fetch(
+        `https://api.panvic.in/api/projects/${architectId}/${projectId}`,
+        {
+          method: "DELETE",
+        }
+      );
 
-  setProjectForm({
-    title: "",
-    location: "",
-    description:
-      "",
-    status:
-      "In Progress",
-    image: "",
-  });
+      const result = await res.json();
 
-};const handleEditProject = (
-  project
-) => {
-
-  setProjectForm({
-    title:
-      project.title,
-    location:
-      project.location,
-    description:
-      project.description,
-    status:
-      project.status,
-    image:
-      project.image,
-  });
-
-  setEditingProjectId(
-    project.id
-  );
-
-  setEditProjectModal(
-    true
-  );
-
-};
+      if (result.success) {
+        fetchProjects(architectId);
+      }
+    } catch (err) {
+      console.log(err);
+    }
+  };
   return (
     <section className="profile">
       <div className="profile__container">
@@ -385,11 +370,15 @@ const handleAddProject = (
 
           <div className="profile__avatar-wrapper">
             <label htmlFor="profileUpload" className="profile__avatar-upload">
-              <img
-                src={profileData.profileImage}
-                alt="Profile"
-                className="profile__avatar-img"
-              />
+              {profileData.profileImage ? (
+                <img
+                  src={profileData.profileImage}
+                  alt="Profile"
+                  className="profile__avatar-img"
+                />
+              ) : (
+                <div className="profile__avatar-placeholder">Upload Photo</div>
+              )}
             </label>
 
             <input
@@ -441,213 +430,151 @@ const handleAddProject = (
 
           {/* ================= CATEGORY DETAILS ================= */}
 
-          <div className="profile__tabs">
+          <div className="profile__accordions">
             {/* PERSONAL */}
 
-            <div className="profile__tab-card">
-<div className="profile__tab-head">
+            <div className="profile__accordion">
+              <button
+                className="profile__accordion-header"
+                onClick={() => toggleAccordion("personal")}
+              >
+                <span>Personal Details</span>
 
-  <h3>
-    Personal Details
-  </h3>
+                <span>{openAccordion === "personal" ? "−" : "+"}</span>
+              </button>
 
-  <button
-    className="profile__tab-edit"
-    onClick={() =>
-      openCategoryModal(
-        "personal"
-      )
-    }
-  >
-    Edit
-  </button>
+              <button
+                className="profile__tab-edit"
+                onClick={() => openCategoryModal("personal")}
+              >
+                Edit
+              </button>
+              {openAccordion === "personal" && (
+                <div className="profile__accordion-body">
+                  <div className="profile__tab-grid">
+                    <div className="profile__item">
+                      <span>Full Name</span>
+                      <h4>{profileData.name}</h4>
+                    </div>
 
-</div>
+                    <div className="profile__item">
+                      <span>Mobile</span>
+                      <h4>{profileData.mobile}</h4>
+                    </div>
 
-              <div className="profile__tab-grid">
-                <div className="profile__item">
-                  <span>Full Name</span>
+                    <div className="profile__item">
+                      <span>Email</span>
+                      <h4>{profileData.email}</h4>
+                    </div>
 
-                  <h4>{profileData.name}</h4>
+                    <div className="profile__item">
+                      <span>DOB</span>
+                      <h4>{profileData.dob}</h4>
+                    </div>
+
+                    <div className="profile__item">
+                      <span>Marital Status</span>
+                      <h4>{profileData.marital_status}</h4>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="profile__item">
-                  <span>Mobile</span>
-
-                  <h4>{profileData.mobile}</h4>
-                </div>
-
-                <div className="profile__item">
-                  <span>Email</span>
-
-                  <h4>{profileData.email}</h4>
-                </div>
-
-                <div className="profile__item">
-                  <span>DOB</span>
-
-                  <h4>{profileData.dob}</h4>
-                </div>
-
-                <div className="profile__item">
-                  <span>Marital Status</span>
-
-                  <h4>{profileData.marital_status}</h4>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* PROFESSIONAL */}
 
-            <div className="profile__tab-card">
-              <div className="profile__tab-head">
-                <h3>Professional Details</h3><button
-  className="profile__tab-edit"
-  onClick={() =>
-    openCategoryModal(
-      "professional"
-    )
-  }
->
-  Edit
-</button>
-              </div>
+            <div className="profile__accordion">
+              <button
+                className="profile__accordion-header"
+                onClick={() => toggleAccordion("professional")}
+              >
+                <span>Professional Details</span>
 
-              <div className="profile__tab-grid">
-                <div className="profile__item">
-                  <span>Profession</span>
+                <span>{openAccordion === "professional" ? "−" : "+"}</span>
+              </button>
+              <button
+                className="profile__tab-edit"
+                onClick={() => openCategoryModal("professional")}
+              >
+                Edit
+              </button>
 
-                  <h4>{profileData.profession}</h4>
+              {openAccordion === "professional" && (
+                <div className="profile__accordion-body">
+                  <div className="profile__tab-grid">
+                    <div className="profile__item">
+                      <span>Profession</span>
+                      <h4>{profileData.profession}</h4>
+                    </div>
+
+                    <div className="profile__item">
+                      <span>Firm Name</span>
+                      <h4>{profileData.firm_name}</h4>
+                    </div>
+
+                    <div className="profile__item">
+                      <span>Work</span>
+                      <h4>{profileData.work}</h4>
+                    </div>
+
+                    <div className="profile__item">
+                      <span>Location</span>
+                      <h4>{profileData.location}</h4>
+                    </div>
+                  </div>
                 </div>
-
-                <div className="profile__item">
-                  <span>Firm Name</span>
-
-                  <h4>{profileData.firm_name}</h4>
-                </div>
-
-                <div className="profile__item">
-                  <span>Work</span>
-
-                  <h4>{profileData.work}</h4>
-                </div>
-
-                <div className="profile__item">
-                  <span>Location</span>
-
-                  <h4>{profileData.location}</h4>
-                </div>
-              </div>
+              )}
             </div>
 
             {/* BANK */}
 
-<div className="profile__tab-card">
+            <div className="profile__accordion">
+              <button
+                className="profile__accordion-header"
+                onClick={() => toggleAccordion("bank")}
+              >
+                <span>Bank Details</span>
 
-  <div className="profile__tab-head">
+                <span>{openAccordion === "bank" ? "−" : "+"}</span>
+              </button>
 
-    <h3>
-      Bank Details
-    </h3>
+              <button
+                className="profile__tab-edit"
+                onClick={() => openCategoryModal("bank")}
+              >
+                Edit
+              </button>
+              {openAccordion === "bank" && (
+                <div className="profile__accordion-body">
+                  <div className="profile__tab-grid">
+                    <div className="profile__item">
+                      <span>Bank Name</span>
+                      <h4>{profileData.bank_name}</h4>
+                    </div>
 
-    <button
-      className="profile__tab-edit"
-      onClick={() =>
-        openCategoryModal(
-          "bank"
-        )
-      }
-    >
-      Edit
-    </button>
+                    <div className="profile__item">
+                      <span>Account Holder</span>
+                      <h4>{profileData.account_holder_name}</h4>
+                    </div>
 
-  </div>
+                    <div className="profile__item">
+                      <span>Account Number</span>
+                      <h4>{profileData.account_number}</h4>
+                    </div>
 
-  <div className="profile__tab-grid">
+                    <div className="profile__item">
+                      <span>IFSC Code</span>
+                      <h4>{profileData.ifsc_code}</h4>
+                    </div>
 
-    {/* BANK NAME */}
-
-    <div className="profile__item">
-
-      <span>
-        Bank Name
-      </span>
-
-      <h4>
-        {
-          profileData.bank_name
-        }
-      </h4>
-
-    </div>
-
-    {/* ACCOUNT HOLDER */}
-
-    <div className="profile__item">
-
-      <span>
-        Account Holder
-      </span>
-
-      <h4>
-        {
-          profileData.account_holder_name
-        }
-      </h4>
-
-    </div>
-
-    {/* ACCOUNT NUMBER */}
-
-    <div className="profile__item">
-
-      <span>
-        Account Number
-      </span>
-
-      <h4>
-        {
-          profileData.account_number
-        }
-      </h4>
-
-    </div>
-
-    {/* IFSC */}
-
-    <div className="profile__item">
-
-      <span>
-        IFSC Code
-      </span>
-
-      <h4>
-        {
-          profileData.ifsc_code
-        }
-      </h4>
-
-    </div>
-
-    {/* UPI */}
-
-    <div className="profile__item">
-
-      <span>
-        UPI ID
-      </span>
-
-      <h4>
-        {
-          profileData.upi_id
-        }
-      </h4>
-
-    </div>
-
-  </div>
-
-</div>
+                    <div className="profile__item">
+                      <span>UPI ID</span>
+                      <h4>{profileData.upi_id}</h4>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -658,750 +585,546 @@ const handleAddProject = (
             <h3>Projects</h3>
           </div>
 
-<div className="profile__section">
+          <div className="profile__section">
+            {projects.length > 0 ? (
+              <div className="profile__projects-grid">
+                {projects.map((project) => (
+                  <div key={project.id} className="profile__project-card">
+                    <div className="profile__project-image">
+                      <img
+                        src={project.image}
+                        alt={project.title}
+                        className="profile__project-img"
+                      />
 
-  {projects.length > 0 ? (
+                      <div
+                        className={`profile__badge ${
+                          project.status === "Completed"
+                            ? "completed"
+                            : "in-progress"
+                        }`}
+                      >
+                        {project.status}
+                      </div>
+                    </div>
 
-    <div className="profile__projects-grid">
+                    <div className="profile__project-info">
+                      <h4>{project.title}</h4>
+                      <p>{project.location}</p>
+                      <div className="profile__project-desc">
+                        {project.description}
+                      </div>{" "}
+                      <div className="profile__project-actions">
+                        <div className="profile__project-actions">
+                          <button
+                            className="profile__project-edit"
+                            onClick={() => handleEditProject(project)}
+                          >
+                            Edit
+                          </button>
 
-      {projects.map(
-        (project) => (
-
-          <div
-            key={project.id}
-            className="profile__project-card"
-          >
-
-            <div className="profile__project-image">
-
-              <img
-                src={project.image}
-                alt={project.title}
-                className="profile__project-img"
-              />
-
-              <div
-                className={`profile__badge ${
-                  project.status ===
-                  "Completed"
-                    ? "completed"
-                    : "in-progress"
-                }`}
-              >
-
-                {project.status}
-
+                          <button
+                            className="profile__project-edit"
+                            onClick={() => handleDeleteProject(project.id)}
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
+            ) : (
+              <div className="profile__empty">
+                <h4>No Projects Yet</h4>
 
-            </div>
-
-            <div className="profile__project-info">
-<div className="profile__project-actions">
-
-  <button
-    className="profile__project-edit"
-    onClick={() =>
-      handleEditProject(
-        project
-      )
-    }
-  >
-
-    Edit Project
-
-  </button>
-
-</div>
-              <h4>
-                {project.title}
-              </h4>
-
-              <p>
-                {project.location}
-              </p>
-
-              <div className="profile__project-desc">
-
-                {
-                  project.description
-                }
-
+                <p>Start uploading your architecture projects.</p>
               </div>
-
-            </div>
-
+            )}
           </div>
-
-        )
-      )}
-
-    </div>
-
-  ) : (
-
-    <div className="profile__empty">
-
-      <h4>
-        No Projects Yet
-      </h4>
-
-      <p>
-        Start uploading your architecture projects.
-      </p>
-
-    </div>
-
-  )}
-
-</div>
         </div>
       </div>
 
       {/* ================= ADD PROJECT MODAL ================= */}
-{/* ================= CATEGORY DETAILS MODAL ================= */}
+      {/* ================= CATEGORY DETAILS MODAL ================= */}
 
-{detailsModal && (
-
-  <div
-    className="modal__overlay"
-    onClick={() =>
-      setDetailsModal(
-        false
-      )
-    }
-  >
-
-    <div
-      className="modal"
-      onClick={(e) =>
-        e.stopPropagation()
-      }
-    >
-
-      <h2 className="modal__title">
-
-        {activeCategory ===
-        "personal"
-          ? "Edit Personal Details"
-          : activeCategory ===
-            "professional"
-          ? "Edit Professional Details"
-          : "Edit Bank Details"}
-
-      </h2>
-
-      <div className="modal__form">
-
-        {/* PERSONAL */}
-
-        {activeCategory ===
-          "personal" && (
-
-          <>
-
-            <input
-              type="text"
-              name="name"
-              className="modal__input"
-              placeholder="Full Name"
-              value={
-                profileData.name
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="text"
-              name="mobile"
-              className="modal__input"
-              placeholder="Mobile Number"
-              value={
-                profileData.mobile
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="email"
-              name="email"
-              className="modal__input"
-              placeholder="Email"
-              value={
-                profileData.email
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="date"
-              name="dob"
-              className="modal__input"
-              value={
-                profileData.dob
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-          </>
-
-        )}
-
-        {/* PROFESSIONAL */}
-
-        {activeCategory ===
-          "professional" && (
-
-          <>
-
-            <input
-              type="text"
-              name="profession"
-              className="modal__input"
-              placeholder="Profession"
-              value={
-                profileData.profession
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="text"
-              name="firm_name"
-              className="modal__input"
-              placeholder="Firm Name"
-              value={
-                profileData.firm_name
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="text"
-              name="work"
-              className="modal__input"
-              placeholder="Work"
-              value={
-                profileData.work
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-            <input
-              type="text"
-              name="location"
-              className="modal__input"
-              placeholder="Location"
-              value={
-                profileData.location
-              }
-              onChange={
-                handleChange
-              }
-            />
-
-          </>
-
-        )}
-
-        {/* BANK */}
-
-       {activeCategory ===
-  "bank" && (
-
-  <>
-
-    {/* BANK NAME */}
-
-    <input
-      type="text"
-      name="bank_name"
-      className="modal__input"
-      placeholder="Bank Name"
-      value={
-        profileData.bank_name
-      }
-      onChange={
-        handleChange
-      }
-    />
-
-    {/* ACCOUNT HOLDER */}
-
-    <input
-      type="text"
-      name="account_holder_name"
-      className="modal__input"
-      placeholder="Account Holder Name"
-      value={
-        profileData.account_holder_name
-      }
-      onChange={
-        handleChange
-      }
-    />
-
-    {/* ACCOUNT NUMBER */}
-
-    <input
-      type="text"
-      name="account_number"
-      className="modal__input"
-      placeholder="Account Number"
-      value={
-        profileData.account_number
-      }
-      onChange={
-        handleChange
-      }
-    />
-
-    {/* IFSC */}
-
-    <input
-      type="text"
-      name="ifsc_code"
-      className="modal__input"
-      placeholder="IFSC Code"
-      value={
-        profileData.ifsc_code
-      }
-      onChange={
-        handleChange
-      }
-    />
-
-    {/* UPI */}
-
-    <input
-      type="text"
-      name="upi_id"
-      className="modal__input"
-      placeholder="UPI ID"
-      value={
-        profileData.upi_id
-      }
-      onChange={
-        handleChange
-      }
-    />
-
-  </>
-
-)}
-        <div className="modal__actions">
-
-          <button
-            type="button"
-            className="modal__btn modal__btn--ghost"
-            onClick={() =>
-              setDetailsModal(
-                false
-              )
-            }
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            className="modal__btn"
-            onClick={() =>
-              setDetailsModal(
-                false
-              )
-            }
-          >
-            Save Changes
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-)}
-      {open && (
-        <div className="modal__overlay" onClick={() => setOpen(false)}>
+      {detailsModal && (
+        <div className="modal__overlay" onClick={() => setDetailsModal(false)}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>
-            <h2 className="modal__title">Add Project</h2>
+            <h2 className="modal__title">
+              {activeCategory === "personal"
+                ? "Edit Personal Details"
+                : activeCategory === "professional"
+                ? "Edit Professional Details"
+                : "Edit Bank Details"}
+            </h2>
 
-            <form className="modal__form" onSubmit={handleAddProject}>
-              <div className="projectUpload">
-                <label htmlFor="projectImage" className="projectUpload__label">
-                  {projectForm.image ? (
-                    <img
-                      src={projectForm.image}
-                      alt="Project"
-                      className="projectUpload__preview"
-                    />
-                  ) : (
-                    <div className="projectUpload__placeholder">
-                      Upload Image
-                    </div>
-                  )}
-                </label>
+            <div className="modal__form">
+              {/* PERSONAL */}
 
-                <input
-                  id="projectImage"
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  onChange={handleProjectImage}
-                />
-              </div>
+              {activeCategory === "personal" && (
+                <>
+                  <input
+                    type="text"
+                    name="name"
+                    className="modal__input"
+                    placeholder="Full Name"
+                    value={profileData.name}
+                    onChange={handleChange}
+                  />
 
-              <input
-                className="modal__input"
-                type="text"
-                name="title"
-                value={projectForm.title}
-                onChange={handleProjectChange}
-                placeholder="Project Name"
-                required
-              />
+                  <input
+                    type="text"
+                    name="mobile"
+                    className="modal__input"
+                    placeholder="Mobile Number"
+                    value={profileData.mobile}
+                    onChange={handleChange}
+                  />
 
-              <input
-                className="modal__input"
-                type="text"
-                name="location"
-                value={projectForm.location}
-                onChange={handleProjectChange}
-                placeholder="Location"
-              />
+                  <input
+                    type="email"
+                    name="email"
+                    className="modal__input"
+                    placeholder="Email"
+                    value={profileData.email}
+                    onChange={handleChange}
+                  />
 
-              <textarea
-                className="modal__input modal__textarea"
-                name="description"
-                value={projectForm.description}
-                onChange={handleProjectChange}
-                placeholder="Description"
-              />
+                  <input
+                    type="date"
+                    name="dob"
+                    className="modal__input"
+                    value={profileData.dob}
+                    onChange={handleChange}
+                  />
+                </>
+              )}
 
+              {/* PROFESSIONAL */}
+
+              {activeCategory === "professional" && (
+                <>
+                  <input
+                    type="text"
+                    name="profession"
+                    className="modal__input"
+                    placeholder="Profession"
+                    value={profileData.profession}
+                    onChange={handleChange}
+                  />
+
+                  <input
+                    type="text"
+                    name="firm_name"
+                    className="modal__input"
+                    placeholder="Firm Name"
+                    value={profileData.firm_name}
+                    onChange={handleChange}
+                  />
+
+                  <input
+                    type="text"
+                    name="work"
+                    className="modal__input"
+                    placeholder="Work"
+                    value={profileData.work}
+                    onChange={handleChange}
+                  />
+
+                  <input
+                    type="text"
+                    name="location"
+                    className="modal__input"
+                    placeholder="Location"
+                    value={profileData.location}
+                    onChange={handleChange}
+                  />
+                </>
+              )}
+
+              {/* BANK */}
+
+              {activeCategory === "bank" && (
+                <>
+                  {/* BANK NAME */}
+
+                  <input
+                    type="text"
+                    name="bank_name"
+                    className="modal__input"
+                    placeholder="Bank Name"
+                    value={profileData.bank_name}
+                    onChange={handleChange}
+                  />
+
+                  {/* ACCOUNT HOLDER */}
+
+                  <input
+                    type="text"
+                    name="account_holder_name"
+                    className="modal__input"
+                    placeholder="Account Holder Name"
+                    value={profileData.account_holder_name}
+                    onChange={handleChange}
+                  />
+
+                  {/* ACCOUNT NUMBER */}
+
+                  <input
+                    type="text"
+                    name="account_number"
+                    className="modal__input"
+                    placeholder="Account Number"
+                    value={profileData.account_number}
+                    onChange={handleChange}
+                  />
+
+                  {/* IFSC */}
+
+                  <input
+                    type="text"
+                    name="ifsc_code"
+                    className="modal__input"
+                    placeholder="IFSC Code"
+                    value={profileData.ifsc_code}
+                    onChange={handleChange}
+                  />
+
+                  {/* UPI */}
+
+                  <input
+                    type="text"
+                    name="upi_id"
+                    className="modal__input"
+                    placeholder="UPI ID"
+                    value={profileData.upi_id}
+                    onChange={handleChange}
+                  />
+                </>
+              )}
               <div className="modal__actions">
                 <button
                   type="button"
                   className="modal__btn modal__btn--ghost"
-                  onClick={() => setOpen(false)}
+                  onClick={() => setDetailsModal(false)}
                 >
                   Cancel
                 </button>
 
-                <button type="submit" className="modal__btn">
-                  Save
+                <button
+                  type="button"
+                  className="modal__btn"
+                  onClick={() => setDetailsModal(false)}
+                >
+                  Save Changes
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
-      )}{/* ================= EDIT PROFILE MODAL ================= */}
+      )}
+{/* ================= ADD PROJECT MODAL ================= */}
+{open && (
+  <div className="modal__overlay" onClick={() => setOpen(false)}>
+    <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <h2 className="modal__title">Add Project</h2>
 
-{showEditModal && (
-
-  <div
-    className="modal__overlay"
-    onClick={() =>
-      setShowEditModal(
-        false
-      )
-    }
-  >
-
-    <div
-      className="modal"
-      onClick={(e) =>
-        e.stopPropagation()
-      }
-    >
-
-      <h2 className="modal__title">
-        Edit Profile
-      </h2>
-
-      <div className="modal__form">
-
-        <input
-          type="text"
-          name="name"
-          className="modal__input"
-          placeholder="Full Name"
-          value={
-            profileData.name
-          }
-          onChange={
-            handleChange
-          }
-        />
-
-        <input
-          type="text"
-          name="profession"
-          className="modal__input"
-          placeholder="Profession"
-          value={
-            profileData.profession
-          }
-          onChange={
-            handleChange
-          }
-        />
-
-        <input
-          type="text"
-          name="work"
-          className="modal__input"
-          placeholder="Work / Firm"
-          value={
-            profileData.work
-          }
-          onChange={
-            handleChange
-          }
-        />
-
-        <textarea
-          name="bio"
-          className="modal__input modal__textarea"
-          placeholder="Bio"
-          value={
-            profileData.bio
-          }
-          onChange={
-            handleChange
-          }
-        />
-
-        <input
-          type="text"
-          name="location"
-          className="modal__input"
-          placeholder="Location"
-          value={
-            profileData.location
-          }
-          onChange={
-            handleChange
-          }
-        />
-
-        <div className="modal__actions">
-
-          <button
-            type="button"
-            className="modal__btn modal__btn--ghost"
-            onClick={() =>
-              setShowEditModal(
-                false
-              )
-            }
-          >
-            Cancel
-          </button>
-
-          <button
-            type="button"
-            className="modal__btn"
-            onClick={
-              handleSave
-            }
-          >
-            Save Changes
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-
-  </div>
-
-)}{/* ================= EDIT PROJECT MODAL ================= */}
-
-{editProjectModal && (
-
-  <div
-    className="modal__overlay"
-    onClick={() => {
-
-      setEditProjectModal(
-        false
-      );
-
-      setEditingProjectId(
-        null
-      );
-
-    }}
-  >
-
-    <div
-      className="modal"
-      onClick={(e) =>
-        e.stopPropagation()
-      }
-    >
-
-      <h2 className="modal__title">
-        Edit Project
-      </h2>
-
-      <form
-        className="modal__form"
-        onSubmit={
-          handleAddProject
-        }
-      >
-
+      <form className="modal__form" onSubmit={handleAddProject}>
         <div className="projectUpload">
-
-          <label
-            htmlFor="editProjectImage"
-            className="projectUpload__label"
-          >
-
+          <label htmlFor="projectImage" className="projectUpload__label">
             {projectForm.image ? (
-
               <img
-                src={
-                  projectForm.image
-                }
+                src={projectForm.image}
                 alt="Project"
                 className="projectUpload__preview"
               />
-
             ) : (
-
-              <div className="projectUpload__placeholder">
-                Upload Image
-              </div>
-
+              <div className="projectUpload__placeholder">Upload Image</div>
             )}
-
           </label>
 
           <input
-            id="editProjectImage"
+            id="projectImage"
             type="file"
             hidden
             accept="image/*"
-            onChange={
-              handleProjectImage
-            }
+            onChange={handleProjectImage}
           />
-
         </div>
 
         <input
           className="modal__input"
           type="text"
           name="title"
-          value={
-            projectForm.title
-          }
-          onChange={
-            handleProjectChange
-          }
+          value={projectForm.title}
+          onChange={handleProjectChange}
           placeholder="Project Name"
+          required
+        />
+
+        <input
+          className="modal__input"
+          type="text"
+          name="client"
+          value={projectForm.client}
+          onChange={handleProjectChange}
+          placeholder="Client Name"
         />
 
         <input
           className="modal__input"
           type="text"
           name="location"
-          value={
-            projectForm.location
-          }
-          onChange={
-            handleProjectChange
-          }
+          value={projectForm.location}
+          onChange={handleProjectChange}
           placeholder="Location"
+        />
+
+        <input
+          className="modal__input"
+          type="number"
+          name="budget"
+          value={projectForm.budget}
+          onChange={handleProjectChange}
+          placeholder="Budget (₹)"
+        />
+
+        <input
+          className="modal__input"
+          type="date"
+          name="date"
+          value={projectForm.date}
+          onChange={handleProjectChange}
         />
 
         <textarea
           className="modal__input modal__textarea"
           name="description"
-          value={
-            projectForm.description
-          }
-          onChange={
-            handleProjectChange
-          }
+          value={projectForm.description}
+          onChange={handleProjectChange}
           placeholder="Description"
         />
 
         <select
           className="modal__input"
           name="status"
-          value={
-            projectForm.status
-          }
-          onChange={
-            handleProjectChange
-          }
+          value={projectForm.status}
+          onChange={handleProjectChange}
         >
-
-          <option>
-            In Progress
-          </option>
-
-          <option>
-            Completed
-          </option>
-
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
         </select>
 
         <div className="modal__actions">
+          <button
+            type="button"
+            className="modal__btn modal__btn--ghost"
+            onClick={() => setOpen(false)}
+          >
+            Cancel
+          </button>
 
+          <button type="submit" className="modal__btn">
+            Save
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+      {/* ================= EDIT PROFILE MODAL ================= */}
+
+      {showEditModal && (
+        <div className="modal__overlay" onClick={() => setShowEditModal(false)}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal__title">Edit Profile</h2>
+
+            <div className="modal__form">
+              <input
+                type="text"
+                name="name"
+                className="modal__input"
+                placeholder="Full Name"
+                value={profileData.name}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="profession"
+                className="modal__input"
+                placeholder="Profession"
+                value={profileData.profession}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="work"
+                className="modal__input"
+                placeholder="Work / Firm"
+                value={profileData.work}
+                onChange={handleChange}
+              />
+
+              <textarea
+                name="bio"
+                className="modal__input modal__textarea"
+                placeholder="Bio"
+                value={profileData.bio}
+                onChange={handleChange}
+              />
+
+              <input
+                type="text"
+                name="location"
+                className="modal__input"
+                placeholder="Location"
+                value={profileData.location}
+                onChange={handleChange}
+              />
+
+              <div className="modal__actions">
+                <button
+                  type="button"
+                  className="modal__btn modal__btn--ghost"
+                  onClick={() => setShowEditModal(false)}
+                >
+                  Cancel
+                </button>
+
+                <button
+                  type="button"
+                  className="modal__btn"
+                  onClick={handleSave}
+                >
+                  Save Changes
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* ================= EDIT PROJECT MODAL ================= */}
+      {/* ================= EDIT PROJECT MODAL ================= */}
+   {/* ================= EDIT PROJECT MODAL ================= */}
+{editProjectModal && (
+  <div
+    className="modal__overlay"
+    onClick={() => {
+      setEditProjectModal(false);
+      setEditingProjectId(null);
+    }}
+  >
+    <div className="modal" onClick={(e) => e.stopPropagation()}>
+      <h2 className="modal__title">Edit Project</h2>
+
+      <form className="modal__form" onSubmit={handleUpdateProject}>
+        <div className="projectUpload">
+          <label htmlFor="editProjectImage" className="projectUpload__label">
+            {projectForm.image ? (
+              <img
+                src={projectForm.image}
+                alt="Project"
+                className="projectUpload__preview"
+              />
+            ) : (
+              <div className="projectUpload__placeholder">Upload Image</div>
+            )}
+          </label>
+          <input
+            id="editProjectImage"
+            type="file"
+            hidden
+            accept="image/*"
+            onChange={handleProjectImage}
+          />
+        </div>
+
+        <input
+          className="modal__input"
+          type="text"
+          name="title"
+          value={projectForm.title}
+          onChange={handleProjectChange}
+          placeholder="Project Name"
+          required
+        />
+
+        <input
+          className="modal__input"
+          type="text"
+          name="client"
+          value={projectForm.client}
+          onChange={handleProjectChange}
+          placeholder="Client Name"
+        />
+
+        <input
+          className="modal__input"
+          type="text"
+          name="location"
+          value={projectForm.location}
+          onChange={handleProjectChange}
+          placeholder="Location"
+        />
+
+        <input
+          className="modal__input"
+          type="number"
+          name="budget"
+          value={projectForm.budget}
+          onChange={handleProjectChange}
+          placeholder="Budget (₹)"
+        />
+
+        <input
+          className="modal__input"
+          type="date"
+          name="date"
+          value={projectForm.date}
+          onChange={handleProjectChange}
+        />
+
+        <textarea
+          className="modal__input modal__textarea"
+          name="description"
+          value={projectForm.description}
+          onChange={handleProjectChange}
+          placeholder="Description"
+        />
+
+        <select
+          className="modal__input"
+          name="status"
+          value={projectForm.status}
+          onChange={handleProjectChange}
+        >
+          <option value="In Progress">In Progress</option>
+          <option value="Completed">Completed</option>
+        </select>
+
+        <div className="modal__actions">
           <button
             type="button"
             className="modal__btn modal__btn--ghost"
             onClick={() => {
-
-              setEditProjectModal(
-                false
-              );
-
-              setEditingProjectId(
-                null
-              );
-
+              setEditProjectModal(false);
+              setEditingProjectId(null);
             }}
           >
             Cancel
           </button>
 
-          <button
-            type="submit"
-            className="modal__btn"
-          >
+          <button type="submit" className="modal__btn">
             Update Project
           </button>
-
         </div>
-
       </form>
-
     </div>
-
   </div>
-
 )}
     </section>
   );

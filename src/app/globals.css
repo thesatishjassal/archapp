@@ -480,14 +480,14 @@
 }
 
 .auth__card {
-  width: 100%;
-  max-width: 920px;
-  background: #fff;
-  border: 1px solid #ededed;
-  border-radius: 28px;
-  overflow: hidden;
-  display: grid;
-  grid-template-columns: 380px 1fr;
+    background: #fff;
+    border: 1px solid #ededed;
+    border-radius: 28px;
+    grid-template-columns: 380px 1fr;
+    width: 100%;
+    max-width: max-content;
+    display: grid;
+    overflow: hidden;
 }
 
 /* LEFT */
@@ -558,9 +558,9 @@
 /* RIGHT */
 
 .auth__right {
-  padding: 42px;
-  display: flex;
-  align-items: center;
+    align-items: center;
+    padding: 25px;
+    display: flex;
 }
 
 .auth__inner {
@@ -572,9 +572,9 @@
 }
 
 .auth__heading {
-  font-size: 30px;
-  font-weight: 700;
-  margin-bottom: 8px;
+    margin-bottom: 8px;
+    font-size: 25px;
+    font-weight: 700;
 }
 
 .auth__text {
@@ -3530,9 +3530,6 @@ body {
     grid-template-columns: 1fr;
   }
 
-}.profile__project-actions {
-
-  margin-top: 14px;
 }
 
 .profile__project-edit {
@@ -4164,4 +4161,76 @@ body {
 .rewardLevels__row.active p {
 
   color: rgba(255,255,255,0.65);
+}.profile__accordions {
+    flex-direction: column;
+    gap: 12px;
+    display: flex;
+    width: 100%;
+    margin: 30px auto;
+}
+.profile__accordion {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.profile__accordion-header {
+  width: 100%;
+  border: 0;
+  background: #fff;
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.profile__accordion-body {
+  padding: 20px;
+  border-top: 1px solid #f2f2f2;
+}
+
+.profile__accordion-header span:last-child {
+  font-size: 24px;
+  line-height: 1;
+}.profile__project-actions {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 15px;
+    margin-bottom: 8px;
+}.modal__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-top: 20px;
+}
+
+.modal__grid-full {
+  grid-column: 1 / -1;
+}
+
+.modal__input,
+.modal__textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.modal__textarea {
+  min-height: 140px;
+  resize: vertical;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .modal__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal__grid-full {
+    grid-column: auto;
+  }
 }

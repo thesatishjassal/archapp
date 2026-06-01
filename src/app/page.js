@@ -10,7 +10,7 @@ export default function ArchitectPortal() {
         <div className="auth__card">
           {/* LEFT */}
 
-          <div className="auth__left">
+          {/* <div className="auth__left">
             <div className="auth__content">
               <div className="auth__logo-wrap">
                 <img
@@ -32,7 +32,7 @@ export default function ArchitectPortal() {
 
             <div className="auth__circle auth__circle--one"></div>
             <div className="auth__circle auth__circle--two"></div>
-          </div>
+          </div> */}
 
           {/* RIGHT */}
 
