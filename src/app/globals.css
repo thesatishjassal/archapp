@@ -4201,7 +4201,7 @@ body {
     justify-content: space-between;
     width: 100%;
     gap: 15px;
-    margin-bottom: 8px;
+    margin-bottom: 8px; 
 }.modal__grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);

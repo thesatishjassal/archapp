@@ -462,7 +462,7 @@ const s = {
     fontSize: 12, fontWeight: 600,
   },
 
-  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(290px,1fr))", gap: 14 },
+  grid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(240px,1fr))", gap: 14 },
 
   card: {
     background: "#fff", borderRadius: 14, padding: "18px",
