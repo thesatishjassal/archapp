@@ -164,7 +164,7 @@ export default function ArchitectPortal() {
           <div className="ap-header">
             <h1 className="ap-brand">Partner Portal</h1>
             <p className="ap-subtitle">
-              Rewards, orders, and payouts — all in one place for architects and interior designers.
+              Rewards, projects, and payouts — all in one place for architects and interior designers.
             </p>
           </div>
 
