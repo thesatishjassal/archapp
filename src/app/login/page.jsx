@@ -548,16 +548,16 @@ export default function LoginPage() {
           <div className="lp-accent" />
 
           {/* logo */}
-          <div className="lp-logo-row">
+          {/* <div className="lp-logo-row">
             <div className="lp-logo-circle">🏛</div>
             <span className="lp-brand">Panvic</span>
-          </div>
+          </div> */}
 
           {/* step pips */}
-          <div className="lp-pips">
+          {/* <div className="lp-pips">
             <div className={`lp-pip ${step >= 1 ? "active" : ""}`} />
             <div className={`lp-pip ${step >= 2 ? "active" : ""}`} />
-          </div>
+          </div> */}
 
           {/* ── STEP 1: email ── */}
           {step === 1 && (
