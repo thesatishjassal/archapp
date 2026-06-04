@@ -4,109 +4,42 @@ import { useState, useEffect, useRef } from "react";
 
 const API_BASE = "https://api.panvic.in/api";
 
-// ─── tiny helpers ────────────────────────────────────────────────────────────
-
-function AlertBox({ type, message }) {
-  if (!message) return null;
-
-  const map = {
-    error: {
-      bg: "#FEF2F2",
-      border: "#FECACA",
-      color: "#991B1B",
-      icon: "⚠",
-    },
-    success: {
-      bg: "#F0FDF4",
-      border: "#BBF7D0",
-      color: "#166534",
-      icon: "✓",
-    },
-    info: {
-      bg: "#EEF2FF",
-      border: "#C7D2FE",
-      color: "#3730A3",
-      icon: "ℹ",
-    },
-  };
-
-  const t = map[type] || map.info;
-
+function Spinner() {
   return (
-    <div
-      style={{
-        background: t.bg,
-        border: `1px solid ${t.border}`,
-        borderRadius: "10px",
-        padding: "12px 14px",
-        display: "flex",
-        alignItems: "flex-start",
-        gap: "10px",
-        fontSize: "13.5px",
-        color: t.color,
-        marginBottom: "20px",
-        lineHeight: 1.5,
-      }}
-    >
-      <span style={{ flexShrink: 0, fontWeight: 600, fontSize: "14px" }}>
-        {t.icon}
-      </span>
-      <span>{message}</span>
-    </div>
+    <span style={{
+      display: "inline-block",
+      width: "15px", height: "15px",
+      border: "2px solid rgba(255,255,255,0.25)",
+      borderTop: "2px solid #fff",
+      borderRadius: "50%",
+      animation: "spin 0.7s linear infinite",
+      flexShrink: 0,
+    }} />
   );
 }
-
-function Spinner({ color = "#fff" }) {
-  return (
-    <span
-      style={{
-        display: "inline-block",
-        width: "15px",
-        height: "15px",
-        border: `2px solid ${color}33`,
-        borderTop: `2px solid ${color}`,
-        borderRadius: "50%",
-        animation: "spin 0.6s linear infinite",
-        flexShrink: 0,
-      }}
-    />
-  );
-}
-
-// ─── main component ───────────────────────────────────────────────────────────
 
 export default function LoginPage() {
-  const [step, setStep] = useState(1); // 1 = email, 2 = otp
-
+  const [step, setStep] = useState(1);
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
-
-  // timer
   const [seconds, setSeconds] = useState(30);
   const [timerActive, setTimerActive] = useState(false);
   const timerRef = useRef(null);
-
   const emailRef = useRef(null);
   const otpRef = useRef(null);
 
-  // ── timer logic ────────────────────────────────────────────────────────────
+  // ── timer ──────────────────────────────────────────────────────────────────
 
   function startTimer() {
     clearInterval(timerRef.current);
     setSeconds(30);
     setTimerActive(true);
-
     timerRef.current = setInterval(() => {
       setSeconds((s) => {
-        if (s <= 1) {
-          clearInterval(timerRef.current);
-          setTimerActive(false);
-          return 0;
-        }
+        if (s <= 1) { clearInterval(timerRef.current); setTimerActive(false); return 0; }
         return s - 1;
       });
     }, 1000);
@@ -114,7 +47,6 @@ export default function LoginPage() {
 
   useEffect(() => () => clearInterval(timerRef.current), []);
 
-  // focus management
   useEffect(() => {
     if (step === 1) emailRef.current?.focus();
     if (step === 2) setTimeout(() => otpRef.current?.focus(), 80);
@@ -125,21 +57,27 @@ export default function LoginPage() {
   const sendOtp = async (e) => {
     e?.preventDefault();
     setError("");
+    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
     setLoading(true);
-
     try {
       const res = await fetch(`${API_BASE}/arch-auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
-      const data = await res.json().catch(() => ({}));
-
+      let data = {};
+      try { data = await res.json(); } catch {}
       if (!res.ok) {
-        throw new Error(data.detail || data.message || "Failed to send OTP");
+        const msg =
+          data.detail || data.message ||
+          (res.status === 404 ? "No account found for this email. Please register first." : null) ||
+          (res.status === 429 ? "Too many requests. Please wait before trying again." : null) ||
+          "Failed to send OTP. Please try again.";
+        throw new Error(msg);
       }
-
       setStep(2);
       startTimer();
     } catch (err) {
@@ -154,87 +92,75 @@ export default function LoginPage() {
   const resendOtp = async () => {
     if (timerActive) return;
     setError("");
-
     try {
       const res = await fetch(`${API_BASE}/arch-auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
-      const data = await res.json().catch(() => ({}));
-
-      if (!res.ok) {
-        throw new Error(data.detail || data.message || "Failed to resend OTP");
-      }
-
+      let data = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error(data.detail || data.message || "Failed to resend OTP.");
       startTimer();
       setOtp("");
       otpRef.current?.focus();
     } catch (err) {
-      setError(err.message || "Could not resend OTP.");
+      setError(err.message || "Could not resend OTP. Please try again.");
     }
   };
 
-  // ── verify otp + login ─────────────────────────────────────────────────────
+  // ── verify otp ─────────────────────────────────────────────────────────────
 
   const verifyOtp = async (e) => {
     e?.preventDefault();
     setError("");
-    setSuccess(false);
+    if (!otp || otp.length < 6) {
+      setError("Please enter the complete 6-digit OTP.");
+      return;
+    }
     setLoading(true);
-
     try {
-      // 1. verify otp
+      // 1. verify
       const otpRes = await fetch(`${API_BASE}/arch-auth/verify-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, otp }),
       });
-
-      const otpData = await otpRes.json().catch(() => ({}));
-
+      let otpData = {};
+      try { otpData = await otpRes.json(); } catch {}
       if (!otpRes.ok) {
-        throw new Error(
-          otpData.detail || otpData.message || "Invalid or expired OTP"
-        );
+        const msg =
+          otpData.detail || otpData.message ||
+          (otpRes.status === 400 ? "Invalid OTP. Please check and try again." : null) ||
+          (otpRes.status === 410 ? "OTP has expired. Please request a new one." : null) ||
+          "Invalid or expired OTP.";
+        throw new Error(msg);
       }
 
       // 2. login
-      // FastAPI Body(...) with `email: str` expects a raw JSON string, not an object
       const loginRes = await fetch(`${API_BASE}/arch-register/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(email),
       });
-
       const loginData = await loginRes.json();
 
       if (!loginData.success) {
-        if (loginData.error === "USER_NOT_FOUND") {
-          throw new Error(
-            "No account found for this email. Please register first."
-          );
-        }
-        if (loginData.error === "ACCOUNT_PENDING_APPROVAL") {
-          throw new Error(
-            "Your account is pending admin approval. You'll be notified once reviewed."
-          );
-        }
-        throw new Error(loginData.message || "Login failed. Please try again.");
+        const msg =
+          loginData.error === "USER_NOT_FOUND"
+            ? "No account found for this email. Please register first."
+            : loginData.error === "ACCOUNT_PENDING_APPROVAL"
+            ? "Your account is pending admin approval. You'll be notified once reviewed."
+            : loginData.message || "Login failed. Please try again.";
+        throw new Error(msg);
       }
 
-      // 3. save & redirect
+      // 3. save
       clearInterval(timerRef.current);
-
       localStorage.setItem("arch_user", JSON.stringify(loginData.data));
       localStorage.setItem("arch_user_verified", "true");
-
       setSuccess(true);
-
-      setTimeout(() => {
-        window.location.href = "/profile";
-      }, 1200);
+      setTimeout(() => { window.location.href = "/profile"; }, 1500);
     } catch (err) {
       setError(err.message || "Something went wrong. Please try again.");
     } finally {
@@ -242,470 +168,443 @@ export default function LoginPage() {
     }
   };
 
-  // ── otp input: digits only ─────────────────────────────────────────────────
-
   const handleOtpChange = (e) => {
     const val = e.target.value.replace(/\D/g, "").slice(0, 6);
     setOtp(val);
+    if (error) setError("");
   };
-
-  // ── keyboard shortcuts ─────────────────────────────────────────────────────
-
-  const handleEmailKeyDown = (e) => {
-    if (e.key === "Enter") sendOtp();
-  };
-
-  const handleOtpKeyDown = (e) => {
-    if (e.key === "Enter") verifyOtp();
-  };
-
-  // ── timer display ──────────────────────────────────────────────────────────
 
   const timerDisplay = `0:${String(seconds).padStart(2, "0")}`;
-
-  // ── render ─────────────────────────────────────────────────────────────────
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Serif+Display&display=swap');
 
-        .lp-root * { box-sizing: border-box; }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-        .lp-root {
+        .lg-root {
           min-height: 100vh;
+          background: #f5f4f0;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: #F5F4F2;
           padding: 2rem 1rem;
           font-family: 'DM Sans', sans-serif;
         }
 
-        .lp-card {
+        .lg-card {
           background: #fff;
-          border: 1px solid #E8E6E1;
-          border-radius: 20px;
-          padding: 2.5rem;
           width: 100%;
           max-width: 420px;
-          position: relative;
-          overflow: hidden;
-          animation: lp-fade-up 0.3s ease both;
-        }
-
-        .lp-accent {
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 3px;
-          background: linear-gradient(90deg, #534AB7, #1D9E75);
-        }
-
-        .lp-logo-row {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: 1.75rem;
-        }
-
-        .lp-logo-circle {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
-          background: #EEEDFE;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 17px;
-        }
-
-        .lp-brand {
-          font-family: 'DM Serif Display', serif;
-          font-size: 18px;
-          color: #1a1a1a;
-          letter-spacing: -0.01em;
-        }
-
-        .lp-pips {
-          display: flex;
-          gap: 5px;
-          margin-bottom: 1.75rem;
-        }
-
-        .lp-pip {
-          height: 3px;
-          flex: 1;
           border-radius: 2px;
-          background: #E8E6E1;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.07), 0 8px 32px rgba(0,0,0,0.05);
+          overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        .lg-header {
+          padding: 2.5rem 2.5rem 1.75rem;
+          border-bottom: 1px solid #f0ede8;
+        }
+
+        .lg-brand {
+          font-family: 'DM Serif Display', serif;
+          font-size: 1.5rem;
+          color: #1a1a1a;
+          letter-spacing: -0.02em;
+          margin-bottom: 0.3rem;
+        }
+
+        .lg-subtitle {
+          font-size: 0.8125rem;
+          color: #999;
+          line-height: 1.5;
+        }
+
+        /* ── STEP PIPS ── */
+        .lg-pips {
+          display: flex;
+          gap: 4px;
+          margin-top: 1.25rem;
+        }
+
+        .lg-pip {
+          height: 2px;
+          flex: 1;
+          border-radius: 1px;
+          background: #e8e5e0;
           transition: background 0.3s;
         }
+        .lg-pip.active { background: #1a1a1a; }
 
-        .lp-pip.active { background: #534AB7; }
-
-        .lp-heading {
-          font-family: 'DM Serif Display', serif;
-          font-size: 26px;
-          color: #1a1a1a;
-          line-height: 1.2;
-          margin-bottom: 6px;
+        /* ── BODY ── */
+        .lg-body {
+          padding: 2rem 2.5rem 2.5rem;
         }
 
-        .lp-sub {
-          font-size: 14px;
-          color: #6B6862;
-          margin-bottom: 1.75rem;
-          line-height: 1.55;
-        }
-
-        .lp-sub strong {
-          color: #1a1a1a;
-          font-weight: 500;
-        }
-
-        .lp-email-chip {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          background: #EEEDFE;
-          color: #3C3489;
-          border-radius: 40px;
-          padding: 4px 12px 4px 8px;
-          font-size: 13px;
-          font-weight: 500;
+        .lg-section-label {
+          font-size: 0.6875rem;
+          font-weight: 600;
+          letter-spacing: 0.08em;
+          text-transform: uppercase;
+          color: #aaa;
           margin-bottom: 1.25rem;
         }
 
-        .lp-field { margin-bottom: 1.25rem; }
+        /* ── ERROR BANNER ── */
+        .lg-error {
+          background: #fff5f5;
+          border: 1px solid #fcc;
+          border-radius: 2px;
+          padding: 0.75rem 1rem;
+          font-size: 0.8125rem;
+          color: #c0392b;
+          margin-bottom: 1.25rem;
+          display: flex;
+          gap: 0.5rem;
+          align-items: flex-start;
+          line-height: 1.4;
+        }
 
-        .lp-label {
-          display: block;
-          font-size: 11.5px;
+        .lg-error-icon {
+          flex-shrink: 0;
+          font-size: 0.9rem;
+          margin-top: 1px;
+        }
+
+        /* ── SUCCESS BANNER ── */
+        .lg-success-banner {
+          background: #f0fdf4;
+          border: 1px solid #bbf7d0;
+          border-radius: 2px;
+          padding: 0.75rem 1rem;
+          font-size: 0.8125rem;
+          color: #166534;
+          margin-bottom: 1.25rem;
+          display: flex;
+          gap: 0.5rem;
+          align-items: center;
+          line-height: 1.4;
+        }
+
+        /* ── FIELD ── */
+        .lg-field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          margin-bottom: 1.25rem;
+        }
+
+        .lg-label {
+          font-size: 0.75rem;
           font-weight: 500;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-          color: #6B6862;
-          margin-bottom: 8px;
+          color: #555;
         }
 
-        .lp-input {
+        .lg-input {
           width: 100%;
-          height: 46px;
-          padding: 0 14px;
-          font-size: 15px;
-          font-family: 'DM Sans', sans-serif;
-          background: #FAFAF8;
-          border: 1px solid #E0DDD8;
-          border-radius: 10px;
+          height: 40px;
+          padding: 0 0.875rem;
+          border: 1.5px solid #e5e2dc;
+          border-radius: 2px;
+          font-size: 0.875rem;
           color: #1a1a1a;
+          background: #faf9f7;
+          font-family: 'DM Sans', sans-serif;
+          transition: border-color 0.15s, background 0.15s;
           outline: none;
-          transition: border-color 0.15s, box-shadow 0.15s;
         }
 
-        .lp-input:focus {
-          border-color: #7F77DD;
-          box-shadow: 0 0 0 3px rgba(127, 119, 221, 0.12);
-          background: #fff;
-        }
+        .lg-input::placeholder { color: #c0bdb8; }
+        .lg-input:focus { border-color: #1a1a1a; background: #fff; }
+        .lg-input.err { border-color: #c0392b; background: #fff8f7; }
 
-        .lp-input-otp {
-          letter-spacing: 0.4em;
-          font-size: 22px;
+        .lg-input-otp {
+          height: 52px;
+          letter-spacing: 0.5em;
+          font-size: 1.375rem;
           font-weight: 500;
           text-align: center;
+          padding: 0 1rem;
         }
 
-        .lp-otp-status {
+        /* ── OTP STATUS ── */
+        .lg-otp-status {
           display: flex;
           align-items: center;
           justify-content: space-between;
-          background: #F5F4F2;
-          border: 1px solid #E8E6E1;
-          border-radius: 10px;
-          padding: 10px 14px;
+          background: #faf9f7;
+          border: 1px solid #ede9e3;
+          border-radius: 2px;
+          padding: 0.625rem 0.875rem;
           margin-bottom: 1.25rem;
-          font-size: 13.5px;
+          font-size: 0.8125rem;
         }
 
-        .lp-otp-left {
+        .lg-otp-left {
           display: flex;
           align-items: center;
-          gap: 8px;
-          color: #1a1a1a;
+          gap: 0.5rem;
+          color: #555;
         }
 
-        .lp-dot {
-          width: 8px;
-          height: 8px;
+        .lg-dot {
+          width: 7px; height: 7px;
           border-radius: 50%;
-          background: #1D9E75;
-          animation: lp-pulse 1.5s ease infinite;
+          background: #2ecc71;
+          animation: pulse 1.5s ease infinite;
         }
 
-        .lp-timer {
+        .lg-timer {
           font-variant-numeric: tabular-nums;
-          font-weight: 500;
-          color: #534AB7;
-          font-size: 14px;
+          font-weight: 600;
+          color: #1a1a1a;
+          font-size: 0.8125rem;
         }
 
-        .lp-btn {
+        /* ── EMAIL CHIP ── */
+        .lg-email-chip {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: #f5f4f0;
+          border: 1px solid #e5e2dc;
+          border-radius: 2px;
+          padding: 4px 10px;
+          font-size: 0.8125rem;
+          color: #333;
+          margin-bottom: 1.25rem;
+        }
+
+        /* ── BUTTONS ── */
+        .lg-btn {
           width: 100%;
-          height: 46px;
-          border-radius: 10px;
+          height: 44px;
           border: none;
-          font-family: 'DM Sans', sans-serif;
-          font-size: 15px;
+          border-radius: 2px;
+          font-size: 0.875rem;
           font-weight: 500;
+          font-family: 'DM Sans', sans-serif;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
-          gap: 8px;
+          gap: 0.5rem;
           transition: all 0.15s;
+          letter-spacing: 0.01em;
         }
 
-        .lp-btn-primary {
-          background: #534AB7;
-          color: #fff;
-        }
+        .lg-btn-primary { background: #1a1a1a; color: #fff; }
+        .lg-btn-primary:hover:not(:disabled) { background: #333; }
+        .lg-btn-primary:disabled { background: #ccc; cursor: not-allowed; }
 
-        .lp-btn-primary:hover:not(:disabled) { background: #3C3489; }
-        .lp-btn-primary:active:not(:disabled) { transform: scale(0.98); }
-        .lp-btn-primary:disabled { opacity: 0.55; cursor: not-allowed; }
-
-        .lp-btn-ghost {
+        .lg-btn-ghost {
           background: transparent;
-          color: #6B6862;
-          border: 1px solid #E0DDD8;
-          margin-top: 10px;
+          color: #666;
+          border: 1.5px solid #ddd;
+          margin-top: 0.625rem;
         }
+        .lg-btn-ghost:hover { border-color: #999; color: #333; }
 
-        .lp-btn-ghost:hover { background: #F5F4F2; color: #1a1a1a; }
-
-        .lp-divider {
+        /* ── DIVIDER ── */
+        .lg-divider {
           height: 1px;
-          background: #E8E6E1;
+          background: #f0ede8;
           margin: 1.5rem 0;
         }
 
-        .lp-bottom {
-          font-size: 13.5px;
-          color: #6B6862;
+        /* ── FOOTER ── */
+        .lg-footer {
+          font-size: 0.8125rem;
+          color: #999;
           text-align: center;
         }
+        .lg-footer a { color: #1a1a1a; font-weight: 500; text-decoration: none; }
+        .lg-footer a:hover { text-decoration: underline; }
 
-        .lp-bottom a {
-          color: #534AB7;
-          text-decoration: none;
-          font-weight: 500;
-        }
-
-        .lp-bottom a:hover { text-decoration: underline; }
-
-        .lp-resend-row {
-          font-size: 13px;
-          color: #6B6862;
+        /* ── RESEND ── */
+        .lg-resend {
+          font-size: 0.8rem;
+          color: #aaa;
           text-align: center;
-          margin-top: 14px;
+          margin-top: 1rem;
         }
 
-        .lp-resend-btn {
+        .lg-resend-btn {
           background: none;
           border: none;
           padding: 0;
           font-family: 'DM Sans', sans-serif;
-          font-size: 13px;
+          font-size: 0.8rem;
           font-weight: 500;
-          cursor: pointer;
           text-decoration: underline;
           text-underline-offset: 2px;
-          transition: color 0.15s, opacity 0.15s;
+          cursor: pointer;
+          transition: color 0.15s;
+        }
+        .lg-resend-btn.can { color: #1a1a1a; }
+        .lg-resend-btn.wait { color: #ccc; cursor: not-allowed; }
+
+        /* ── VIEW ANIMATION ── */
+        .lg-view {
+          animation: fadeUp 0.2s ease both;
         }
 
-        .lp-resend-btn.active { color: #534AB7; }
-        .lp-resend-btn.inactive { color: #aaa; cursor: not-allowed; }
-
-        .lp-view { animation: lp-fade-up 0.2s ease both; }
-
-        @keyframes lp-fade-up {
-          from { opacity: 0; transform: translateY(6px); }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(5px); }
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes lp-pulse {
+        @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
-          50%       { opacity: 0.4; transform: scale(0.75); }
+          50% { opacity: 0.4; transform: scale(0.7); }
         }
 
-        @keyframes spin {
-          to { transform: rotate(360deg); }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 480px) {
+          .lg-header, .lg-body { padding-left: 1.5rem; padding-right: 1.5rem; }
         }
       `}</style>
 
-      <div className="lp-root">
-        <div className="lp-card">
-          {/* accent stripe */}
-          <div className="lp-accent" />
+      <div className="lg-root">
+        <div className="lg-card">
 
-          {/* logo */}
-          {/* <div className="lp-logo-row">
-            <div className="lp-logo-circle">🏛</div>
-            <span className="lp-brand">Panvic</span>
-          </div> */}
-
-          {/* step pips */}
-          {/* <div className="lp-pips">
-            <div className={`lp-pip ${step >= 1 ? "active" : ""}`} />
-            <div className={`lp-pip ${step >= 2 ? "active" : ""}`} />
-          </div> */}
-
-          {/* ── STEP 1: email ── */}
-          {step === 1 && (
-            <div className="lp-view" key="email-view">
-              <h1 className="lp-heading">Sign in</h1>
-              <p className="lp-sub">
-                Enter your email and we'll send a one-time password.
-              </p>
-
-              <AlertBox type="error" message={error} />
-
-              <form onSubmit={sendOtp}>
-                <div className="lp-field">
-                  <label className="lp-label" htmlFor="lp-email">
-                    Email address
-                  </label>
-                  <input
-                    id="lp-email"
-                    ref={emailRef}
-                    className="lp-input"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    onKeyDown={handleEmailKeyDown}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-
-                <button
-                  className="lp-btn lp-btn-primary"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <>
-                      <Spinner /> Sending…
-                    </>
-                  ) : (
-                    "Send OTP →"
-                  )}
-                </button>
-              </form>
-
-              <div className="lp-divider" />
-              <div className="lp-bottom">
-                Don't have an account?{" "}
-                <a href="/register">Register now</a>
-              </div>
+          {/* HEADER */}
+          <div className="lg-header">
+            <h1 className="lg-brand">Architecture Portal</h1>
+            <p className="lg-subtitle">Sign in to your architect Architecture account.</p>
+            <div className="lg-pips">
+              <div className={`lg-pip ${step >= 1 ? "active" : ""}`} />
+              <div className={`lg-pip ${step >= 2 ? "active" : ""}`} />
             </div>
-          )}
+          </div>
 
-          {/* ── STEP 2: otp ── */}
-          {step === 2 && (
-            <div className="lp-view" key="otp-view">
-              <h1 className="lp-heading">Check your inbox</h1>
-              <p className="lp-sub">
-                We sent a 6-digit code to{" "}
-                <strong>{email}</strong>
-              </p>
+          {/* BODY */}
+          <div className="lg-body">
 
-              <div className="lp-email-chip">
-                ✉ {email}
-              </div>
+            {/* ── STEP 1: Email ── */}
+            {step === 1 && (
+              <div className="lg-view" key="email-view">
+                <p className="lg-section-label">Step 1 — Your Email</p>
 
-              {/* otp sent status + timer */}
-              {timerActive && (
-                <div className="lp-otp-status">
-                  <div className="lp-otp-left">
-                    <div className="lp-dot" />
-                    OTP sent to your inbox
+                {error && (
+                  <div className="lg-error">
+                    <span className="lg-error-icon">⚠</span>
+                    <span>{error}</span>
                   </div>
-                  <span className="lp-timer">{timerDisplay}</span>
+                )}
+
+                <form onSubmit={sendOtp} noValidate>
+                  <div className="lg-field">
+                    <label className="lg-label" htmlFor="lg-email">Email Address</label>
+                    <input
+                      id="lg-email"
+                      ref={emailRef}
+                      className={`lg-input ${error ? "err" : ""}`}
+                      type="email"
+                      placeholder="you@example.com"
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); if (error) setError(""); }}
+                      autoComplete="email"
+                    />
+                  </div>
+
+                  <button className="lg-btn lg-btn-primary" type="submit" disabled={loading}>
+                    {loading ? <><Spinner /> Sending OTP…</> : "Send OTP →"}
+                  </button>
+                </form>
+
+                <div className="lg-divider" />
+                <div className="lg-footer">
+                  Don't have an account? <a href="/register">Register now</a>
                 </div>
-              )}
+              </div>
+            )}
 
-              {/* success */}
-              {success && (
-                <AlertBox type="success" message="Login successful — redirecting…" />
-              )}
+            {/* ── STEP 2: OTP ── */}
+            {step === 2 && (
+              <div className="lg-view" key="otp-view">
+                <p className="lg-section-label">Step 2 — Verify OTP</p>
 
-              {/* error */}
-              {!success && <AlertBox type="error" message={error} />}
+                <div className="lg-email-chip">✉ {email}</div>
 
-              <form onSubmit={verifyOtp}>
-                <div className="lp-field">
-                  <label className="lp-label" htmlFor="lp-otp">
-                    One-time password
-                  </label>
-                  <input
-                    id="lp-otp"
-                    ref={otpRef}
-                    className="lp-input lp-input-otp"
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="······"
-                    value={otp}
-                    onChange={handleOtpChange}
-                    onKeyDown={handleOtpKeyDown}
-                    maxLength={6}
-                    autoComplete="one-time-code"
-                    required
-                  />
-                </div>
+                {timerActive && (
+                  <div className="lg-otp-status">
+                    <div className="lg-otp-left">
+                      <div className="lg-dot" />
+                      OTP sent to your inbox
+                    </div>
+                    <span className="lg-timer">{timerDisplay}</span>
+                  </div>
+                )}
 
-                <button
-                  className="lp-btn lp-btn-primary"
-                  type="submit"
-                  disabled={loading || success}
-                >
-                  {loading ? (
-                    <>
-                      <Spinner /> Verifying…
-                    </>
-                  ) : (
-                    "Verify & Sign in"
-                  )}
-                </button>
-              </form>
+                {success && (
+                  <div className="lg-success-banner">
+                    ✓ &nbsp;Login successful — redirecting to your profile…
+                  </div>
+                )}
 
-              <button
-                type="button"
-                className="lp-btn lp-btn-ghost"
-                onClick={() => {
-                  setStep(1);
-                  setError("");
-                  setOtp("");
-                  clearInterval(timerRef.current);
-                  setTimerActive(false);
-                }}
-              >
-                ← Change email
-              </button>
+                {error && !success && (
+                  <div className="lg-error">
+                    <span className="lg-error-icon">⚠</span>
+                    <span>{error}</span>
+                  </div>
+                )}
 
-              <div className="lp-resend-row">
-                Didn't receive it?{" "}
+                <form onSubmit={verifyOtp} noValidate>
+                  <div className="lg-field">
+                    <label className="lg-label" htmlFor="lg-otp">One-Time Password</label>
+                    <input
+                      id="lg-otp"
+                      ref={otpRef}
+                      className={`lg-input lg-input-otp ${error ? "err" : ""}`}
+                      type="text"
+                      inputMode="numeric"
+                      placeholder="······"
+                      value={otp}
+                      onChange={handleOtpChange}
+                      maxLength={6}
+                      autoComplete="one-time-code"
+                    />
+                  </div>
+
+                  <button
+                    className="lg-btn lg-btn-primary"
+                    type="submit"
+                    disabled={loading || success}
+                  >
+                    {loading ? <><Spinner /> Verifying…</> : "Verify & Sign In"}
+                  </button>
+                </form>
+
                 <button
                   type="button"
-                  className={`lp-resend-btn ${timerActive ? "inactive" : "active"}`}
-                  onClick={resendOtp}
-                  disabled={timerActive}
+                  className="lg-btn lg-btn-ghost"
+                  onClick={() => {
+                    setStep(1); setError(""); setOtp("");
+                    clearInterval(timerRef.current); setTimerActive(false);
+                  }}
                 >
-                  Resend OTP {timerActive ? `(${timerDisplay})` : ""}
+                  ← Change email
                 </button>
+
+                <div className="lg-resend">
+                  Didn't receive it?{" "}
+                  <button
+                    type="button"
+                    className={`lg-resend-btn ${timerActive ? "wait" : "can"}`}
+                    onClick={resendOtp}
+                    disabled={timerActive}
+                  >
+                    Resend OTP {timerActive ? `(${timerDisplay})` : ""}
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
+            )}
+
+          </div>
         </div>
       </div>
     </>
