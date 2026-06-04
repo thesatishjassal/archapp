@@ -14,11 +14,21 @@ export default function Header() {
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const dropdownRef = useRef(null);
+  const [user, setUser] = useState(null);
 
-  useEffect(() => {
-    const verified = localStorage.getItem('arch_user_verified');
-    if (verified === 'true') setIsLoggedIn(true);
-  }, []);
+useEffect(() => {
+  const verified = localStorage.getItem('arch_user_verified');
+
+  if (verified === 'true') {
+    setIsLoggedIn(true);
+
+    const userData = localStorage.getItem('arch_user');
+
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }
+}, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -89,12 +99,19 @@ export default function Header() {
                   aria-expanded={open}
                   aria-haspopup="true"
                 >
-                  <div className="header__avatar">S</div>
+<div className="header__avatar">
+  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+</div>
 
-                  <div className="header__profile-info">
-                    <span className="header__name">Satish</span>
-                    <span className="header__role">Architect</span>
-                  </div>
+<div className="header__profile-info">
+  <span className="header__name">
+    {user?.name || 'User'}
+  </span>
+
+  <span className="header__role">
+    {user?.profession || 'Architect'}
+  </span>
+</div>
 
                   <span
                     className={`header__arrow ${
