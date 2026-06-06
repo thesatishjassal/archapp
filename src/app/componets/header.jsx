@@ -7,9 +7,13 @@ export default function Header() {
   const pathname = usePathname();
 
   // Hide header on homepage
-  if (pathname === '/' || pathname !== '/register' || pathname !== '/login') {
-    return null;
-  }
+if (
+  pathname === '/' ||
+  pathname === '/register' ||
+  pathname === '/login'
+) {
+  return null;
+}
 
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
