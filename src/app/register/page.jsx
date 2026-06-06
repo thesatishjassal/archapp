@@ -680,7 +680,7 @@ export default function RegisterPage() {
                       </div>
 
                       <div className="reg-field">
-                        <label className="reg-label">Date of Birth <span className="opt">(optional)</span></label>
+                        <label className="reg-label">Date of Birth </label>
                         <input
                           type="date"
                           name="date_of_birth"
