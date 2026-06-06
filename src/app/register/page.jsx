@@ -172,7 +172,7 @@ export default function RegisterPage() {
       );
 
       setTimeout(() => {
-        window.location.href = "/profile";
+        window.location.href = "/login";
       }, 2000);
     } catch (err) {
       console.error(err);

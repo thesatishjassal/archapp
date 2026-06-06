@@ -39,21 +39,35 @@ function formatBudget(val) {
 /* ─── REWARD CALCULATION ─── */
 function calcReward(amount) {
   const num = Number(amount) || 0;
-  const base = num * 0.05;
+  const base = num * 0.05;           // 5% base
   let extra = 0;
   let bonusPct = 0;
-  if (num >= 100000000)      { extra = base;       bonusPct = 100; }
-  else if (num >= 75000000)  { extra = base * 0.5; bonusPct = 50;  }
-  else if (num >= 50000000)  { extra = base * 0.3; bonusPct = 30;  }
-  else if (num >= 30000000)  { extra = base * 0.2; bonusPct = 20;  }
+
+  if (num >= 10000000) {        // 10M = 1 Crore = 100L
+    extra = base; 
+    bonusPct = 100;
+  }
+  else if (num >= 7500000) {    // 7.5M = 75L
+    extra = base * 0.5; 
+    bonusPct = 50;
+  }
+  else if (num >= 5000000) {    // 5M = 50L
+    extra = base * 0.3; 
+    bonusPct = 30;
+  }
+  else if (num >= 3000000) {    // 3M = 30L
+    extra = base * 0.2; 
+    bonusPct = 20;
+  }
+
   return { base, extra, total: base + extra, bonusPct, points: num };
 }
 
 const REWARD_PLANS = [
-  { label: "3M",   threshold: 30000000,  bonus: 20 },
-  { label: "5M",   threshold: 50000000,  bonus: 30 },
-  { label: "7.5M", threshold: 75000000,  bonus: 50 },
-  { label: "10M",  threshold: 100000000, bonus: 100 },
+  { label: "3M",   threshold: 3000000,  bonus: 20 },   // 30 Lakh
+  { label: "5M",   threshold: 5000000,  bonus: 30 },   // 50 Lakh
+  { label: "7.5M", threshold: 7500000,  bonus: 50 },   // 75 Lakh
+  { label: "10M",  threshold: 10000000, bonus: 100 },  // 1 Crore
 ];
 
 const STATUS_OPTIONS = ["Pending", "Received", "In Review"];

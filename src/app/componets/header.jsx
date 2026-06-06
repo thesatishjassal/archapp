@@ -7,7 +7,7 @@ export default function Header() {
   const pathname = usePathname();
 
   // Hide header on homepage
-  if (pathname === '/' && pathname !== '/register' && pathname !== '/login') {
+  if (pathname === '/' || pathname !== '/register' || pathname !== '/login') {
     return null;
   }
 
