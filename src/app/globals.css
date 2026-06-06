@@ -448,7 +448,7 @@
   }
 
   .header__right {
-    width: 100%;
+    /* width: 100%; */
     justify-content: space-between;
   }
 
