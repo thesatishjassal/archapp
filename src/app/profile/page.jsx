@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast, Toaster } from "sonner";
+import ProtectedRoute from '../componets/ProtectedRoute';
 
 /* ─── LOADING OVERLAY ─── */
 function LoadingOverlay({ message = "Please wait…" }) {
@@ -562,7 +563,7 @@ export default function ProfilePage() {
 
   /* ──────────────── RENDER ──────────────── */
   return (
-    <>
+    <><ProtectedRoute>
       <Toaster
         position="top-right"
         richColors
@@ -607,7 +608,6 @@ export default function ProfilePage() {
         .profile__accordion { border-bottom: 1px solid #f0ede8; position: relative; }
         .profile__accordion-header { width: 100%; background: none; border: none; display: flex; align-items: center; justify-content: space-between; padding: 13px 4px; font-size: 13px; font-weight: 600; color: #1a1714; cursor: pointer; text-align: left; transition: color 0.15s; }
         .profile__accordion-header:hover { color: #6b6259; }
-        .profile__tab-edit { position: absolute; top: 10px; right: 28px; font-size: 11px; font-weight: 600; color: #8a7d72; background: #f7f5f2; border: 1px solid #eeebe6; border-radius: 6px; padding: 3px 10px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
         .profile__tab-edit:hover { background: #fff; border-color: #c9b99a; color: #1a1714; }
         .profile__accordion-body { padding: 4px 0 14px; }
         .profile__tab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
@@ -620,7 +620,16 @@ export default function ProfilePage() {
         .profile__empty h4 { font-size: 15px; font-weight: 600; color: #3d3530; margin: 0 0 6px; }
         .profile__empty p { font-size: 13px; color: #8a7d72; margin: 0; }
         .modal__overlay { position: fixed; inset: 0; z-index: 9998; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; padding: 16px; backdrop-filter: blur(2px); }
-        .modal { background: #fff; border-radius: 16px; border: 1px solid #eeebe6; width: 100%; max-width: 440px; padding: 24px; max-height: 90vh; overflow-y: auto; }
+       .modal {
+    background: #fff;
+    border-radius: 16px;
+    border: 1px solid #eeebe6;
+    width: 100%;
+    /* max-width: 440px; */
+    padding: 24px;
+    max-height: 80vh;
+    overflow-y: auto;
+}
         .modal__title { font-size: 17px; font-weight: 700; color: #1a1714; margin: 0 0 18px; padding-bottom: 14px; border-bottom: 1px solid #f0ede8; }
         .modal__form { display: flex; flex-direction: column; gap: 12px; }
         .modal__input { width: 100%; height: 38px; background: #faf8f5; border: 1px solid #e8e3dc; border-radius: 9px; padding: 0 12px; font-size: 13.5px; color: #1a1714; font-family: inherit; outline: none; transition: border-color 0.15s, background 0.15s; box-sizing: border-box; }
@@ -637,7 +646,6 @@ export default function ProfilePage() {
         .proj-upload__label:hover { border-color: #a08060; }
         .proj-upload__preview { width: 100%; height: 160px; object-fit: cover; display: block; }
         .proj-upload__placeholder { height: 110px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; color: #a08060; font-size: 13px; background: #faf8f5; }
-        .modal--wide { max-width: 540px !important; }
         .modal__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
         .modal__field { display: flex; flex-direction: column; gap: 4px; }
         .modal__label { font-size: 10.5px; font-weight: 600; color: #b09070; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -653,7 +661,7 @@ export default function ProfilePage() {
         <div className="profile__container">
 
           {/* PROFILE INFO */}
-          <div className="profile__info-main">
+          <div className="proj-card profile__info-main">
             <div className="profile__avatar-wrapper">
               <label htmlFor="profileUpload" className="profile__avatar-upload">
                 {profileData.profileImage
@@ -784,12 +792,72 @@ export default function ProfilePage() {
                   : "Edit Bank Details"}
               </h2>
               <div className="modal__form">
-                {activeCategory === "personal" && (<>
-                  <div className="modal__field"><label className="modal__label">Full Name</label><input type="text" name="name" className="modal__input" placeholder="Full Name" value={profileData.name} onChange={handleChange} /></div>
-                  <div className="modal__field"><label className="modal__label">Mobile Number</label><input type="text" name="mobile" className="modal__input" placeholder="Mobile Number" value={profileData.mobile} onChange={handleChange} /></div>
-                  <div className="modal__field"><label className="modal__label">Email</label><input type="email" name="email" className="modal__input" placeholder="Email" value={profileData.email} onChange={handleChange} /></div>
-                  <div className="modal__field"><label className="modal__label">Date of Birth</label><input type="date" name="dob" className="modal__input" value={profileData.dob} onChange={handleChange} /></div>
-                </>)}
+{activeCategory === "personal" && (
+  <>
+    <div className="modal__field">
+      <label className="modal__label">Full Name</label>
+      <input
+        type="text"
+        name="name"
+        className="modal__input"
+        placeholder="Full Name"
+        value={profileData.name}
+        onChange={handleChange}
+      />
+    </div>
+
+    <div className="modal__field">
+      <label className="modal__label">Mobile Number</label>
+      <input
+        type="text"
+        name="mobile"
+        className="modal__input"
+        placeholder="Mobile Number"
+        value={profileData.mobile}
+        onChange={handleChange}
+      />
+    </div>
+
+    <div className="modal__field">
+      <label className="modal__label">Email</label>
+      <input
+        type="email"
+        name="email"
+        className="modal__input"
+        placeholder="Email"
+        value={profileData.email}
+        onChange={handleChange}
+      />
+    </div>
+
+    <div className="modal__field">
+      <label className="modal__label">Date of Birth</label>
+      <input
+        type="date"
+        name="dob"
+        className="modal__input"
+        value={profileData.dob}
+        onChange={handleChange}
+      />
+    </div>
+
+    <div className="modal__field">
+      <label className="modal__label">Marital Status</label>
+      <select
+        name="marital_status"
+        className="modal__input"
+        value={profileData.marital_status || ""}
+        onChange={handleChange}
+      >
+        <option value="">Select Marital Status</option>
+        <option value="Single">Single</option>
+        <option value="Married">Married</option>
+        <option value="Divorced">Divorced</option>
+        <option value="Widowed">Widowed</option>
+      </select>
+    </div>
+  </>
+)}
                 {activeCategory === "professional" && (<>
                   <div className="modal__field"><label className="modal__label">Profession</label><input type="text" name="profession" className="modal__input" placeholder="Profession" value={profileData.profession} onChange={handleChange} /></div>
                   <div className="modal__field"><label className="modal__label">Firm Name</label><input type="text" name="firm_name" className="modal__input" placeholder="Firm Name" value={profileData.firm_name} onChange={handleChange} /></div>
@@ -860,7 +928,7 @@ export default function ProfilePage() {
             onClose={closeProjectModals}
           />
         )}
-      </section>
+      </section></ProtectedRoute>
     </>
   );
 }

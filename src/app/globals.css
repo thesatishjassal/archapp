@@ -3243,9 +3243,10 @@ body {
 }
 
 .profile__tab-grid {
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 8px;
     display: grid;
+    grid-template-columns: 1fr;
+    gap: 6px;
+    padding: 10px;
 }
 
 .profile__item {
@@ -3551,24 +3552,19 @@ body {
 
   background: #f8f8f8;
 }.profile__tab-edit {
-
-  height: 34px;
-
-  padding: 0 14px;
-
-  border-radius: 10px;
-
-  border: 1px solid #ececec;
-
-  background: #fff;
-
-  font-size: 12px;
-
-  font-weight: 500;
-
-  cursor: pointer;
-
-  transition: .2s ease;
+    color: #8a7d72;
+    cursor: pointer;
+    background: #fff;
+    border: 1px solid #fff;
+    border-radius: 6px;
+    padding: 0;
+    font-family: inherit;
+    font-size: 11px;
+    font-weight: 600;
+    transition: all .15s;
+    position: absolute;
+    top: 12px;
+    right: 28px;
 }
 
 .profile__tab-edit:hover {
@@ -4170,16 +4166,19 @@ body {
 }
 
 .profile__accordion-header {
-  width: 100%;
-  border: 0;
-  background: #fff;
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  font-size: 16px;
-  font-weight: 600;
+    width: 100%;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 13px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #1a1714;
+    cursor: pointer;
+    text-align: left;
+    transition: color 0.15s;
 }
 
 .profile__accordion-body {

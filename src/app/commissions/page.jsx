@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
-
+import ProtectedRoute from '../componets/ProtectedRoute';
 /* ─── LOADING OVERLAY ─── */
 function LoadingOverlay({ message = "Please wait…" }) {
   return (
@@ -39,35 +39,34 @@ function formatBudget(val) {
 /* ─── REWARD CALCULATION ─── */
 function calcReward(amount) {
   const num = Number(amount) || 0;
-  const base = num * 0.05;           // 5% base
+  const base = num * 0.05;
   let extra = 0;
   let bonusPct = 0;
 
-  if (num >= 10000000) {        // 10M = 1 Crore = 100L
-    extra = base; 
+  if (num >= 10000000) {        // 1 Crore
+    extra = base;
     bonusPct = 100;
   }
-  else if (num >= 7500000) {    // 7.5M = 75L
-    extra = base * 0.5; 
+  else if (num >= 7000000) {    // 70L
+    extra = base * 0.5;
     bonusPct = 50;
   }
-  else if (num >= 5000000) {    // 5M = 50L
-    extra = base * 0.3; 
+  else if (num >= 5000000) {    // 50L
+    extra = base * 0.3;
     bonusPct = 30;
   }
-  else if (num >= 3000000) {    // 3M = 30L
-    extra = base * 0.2; 
+  else if (num >= 3000000) {    // 30L
+    extra = base * 0.2;
     bonusPct = 20;
   }
 
   return { base, extra, total: base + extra, bonusPct, points: num };
 }
-
 const REWARD_PLANS = [
-  { label: "3M",   threshold: 3000000,  bonus: 20 },   // 30 Lakh
-  { label: "5M",   threshold: 5000000,  bonus: 30 },   // 50 Lakh
-  { label: "7.5M", threshold: 7500000,  bonus: 50 },   // 75 Lakh
-  { label: "10M",  threshold: 10000000, bonus: 100 },  // 1 Crore
+  { label: "30L",  threshold: 3000000,  bonus: 20 },
+  { label: "50L",  threshold: 5000000,  bonus: 30 },
+  { label: "70L",  threshold: 7000000,  bonus: 50 },
+  { label: "1CR",  threshold: 10000000, bonus: 100 },
 ];
 
 const STATUS_OPTIONS = ["Pending", "Received", "In Review"];
@@ -184,7 +183,7 @@ export default function RewardsPage() {
   const [overlay, setOverlay]         = useState({ show: false, message: "" });
   const [modalOpen, setModalOpen]     = useState(false);
   const [entries, setEntries]         = useState([]);
-  const [sliderAmount, setSliderAmount] = useState(1000000);
+  const [sliderAmount, setSliderAmount] = useState(3000000);
   const [filterStatus, setFilterStatus] = useState("All");
 
   const showOverlay = (msg) => setOverlay({ show: true, message: msg });
@@ -277,7 +276,7 @@ export default function RewardsPage() {
 
   /* ──────────────── RENDER ──────────────── */
   return (
-    <>
+    <>< ProtectedRoute>
       <Toaster position="top-right" richColors toastOptions={{
         duration: 3000,
         style: { fontFamily: "inherit", fontSize: 13, borderRadius: 10, border: "1px solid #eeebe6", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" },
@@ -629,13 +628,13 @@ export default function RewardsPage() {
                 </div>
               </div>
 
-              <input
-                type="range" min="100000" max="99999999" step="100000"
-                value={sliderAmount}
-                style={{ "--val": sliderAmount }}
-                onChange={(e) => setSliderAmount(Number(e.target.value))}
-                className="rp__range"
-              />
+<input
+  type="range" min="1000000" max="11000000" step="500000"
+  value={sliderAmount}
+  style={{ "--val": sliderAmount }}
+  onChange={(e) => setSliderAmount(Number(e.target.value))}
+  className="rp__range"
+/>
 
               <div className="rp__calc-cards">
                 <div className="rp__calc-card">
@@ -784,7 +783,7 @@ export default function RewardsPage() {
             onSave={handleSaveEntry}
           />
         )}
-      </section>
+      </section></ProtectedRoute>
     </>
   );
 }

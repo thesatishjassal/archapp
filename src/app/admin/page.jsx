@@ -20,6 +20,17 @@ const AVATAR_PALETTES = [
 const getPalette = (name = "") =>
   AVATAR_PALETTES[(name.charCodeAt(0) || 0) % AVATAR_PALETTES.length];
 
+/* ─── Days until next occurrence ─── */
+function daysUntilNext(dateStr) {
+  if (!dateStr) return null;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const d = new Date(dateStr);
+  let next = new Date(today.getFullYear(), d.getMonth(), d.getDate());
+  if (next < today) next.setFullYear(today.getFullYear() + 1);
+  return Math.round((next - today) / (1000 * 60 * 60 * 24));
+}
+
 /* ─── Sub-components ─── */
 function Avatar({ name, size = 44 }) {
   const { bg, fg } = getPalette(name);
@@ -73,6 +84,83 @@ function Toast({ toast }) {
     }}>
       <span style={{ fontSize: 17 }}>{toast.type === "success" ? "✓" : "✕"}</span>
       {toast.message}
+    </div>
+  );
+}
+
+/* ─── Celebration Strip ─── */
+function CelebrationStrip({ users }) {
+  const items = [];
+
+  users.forEach((u) => {
+    const bd = daysUntilNext(u.date_of_birth);
+    const ad = daysUntilNext(u.anniversary_date);
+    if (bd !== null && bd <= 2) items.push({ user: u, days: bd, type: "birthday" });
+    if (ad !== null && ad <= 2) items.push({ user: u, days: ad, type: "anniversary" });
+  });
+
+  items.sort((a, b) => a.days - b.days);
+
+  if (!items.length) return null;
+
+  const badge = (days) =>
+    days === 0
+      ? { text: "Today 🎂", bg: "#FEF3C7", color: "#92400E" }
+      : days === 1
+      ? { text: "Tomorrow", bg: "#D1FAE5", color: "#065F46" }
+      : { text: "In 2 days", bg: "#F3F4F6", color: "#6B7280" };
+
+  return (
+    <div style={{ padding: "16px 16px 0", fontFamily: "'DM Sans', sans-serif" }}>
+      {/* Section heading */}
+      <div style={{
+        fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+        color: "#9CA3AF", textTransform: "uppercase", marginBottom: 10,
+      }}>
+        🎁 Upcoming Celebrations
+      </div>
+
+      {items.map(({ user, days, type }) => {
+        const b = badge(days);
+        const cardBg   = days === 0 ? "#FFFBEB" : days === 1 ? "#ECFDF5" : "#fff";
+        const cardBorder = days === 0 ? "#FDE68A" : days === 1 ? "#A7F3D0" : "#F3F4F6";
+        return (
+          <div
+            key={`${user.id}-${type}`}
+            style={{
+              background: cardBg,
+              border: `1px solid ${cardBorder}`,
+              borderRadius: 16, padding: "14px 16px",
+              display: "flex", alignItems: "center", gap: 12,
+              marginBottom: 8,
+            }}
+          >
+            <Avatar name={user.full_name} size={40} />
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#111827" }}>
+                {user.full_name}
+              </div>
+              <div style={{ fontSize: 12, color: "#6B7280", marginTop: 2 }}>
+                {type === "anniversary" ? "💍 Marriage anniversary" : "🎂 Birthday"}
+                {" · "}
+                {user.firm_name || "Independent"}
+              </div>
+              {user.mobile_number && (
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginTop: 2 }}>
+                  📱 {user.mobile_number}
+                </div>
+              )}
+            </div>
+            <span style={{
+              fontSize: 11, fontWeight: 700, padding: "4px 10px",
+              borderRadius: 99, background: b.bg, color: b.color,
+              flexShrink: 0, whiteSpace: "nowrap",
+            }}>
+              {b.text}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -146,15 +234,20 @@ function ProfileDrawer({ user, onClose, onApprove, approving }) {
 
         {/* Detail rows */}
         <div style={{ padding: "24px 24px 0" }}>
-          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.08em", color: "#9CA3AF", textTransform: "uppercase", marginBottom: 12 }}>
+          <div style={{
+            fontSize: 11, fontWeight: 700, letterSpacing: "0.08em",
+            color: "#9CA3AF", textTransform: "uppercase", marginBottom: 12,
+          }}>
             Contact Details
           </div>
           {[
-            { icon: "✉", label: "Email", value: user.email },
-            { icon: "📱", label: "Mobile", value: user.mobile_number },
-            { icon: "🏢", label: "Firm", value: user.firm_name },
-            { icon: "🪪", label: "License", value: user.license_number },
-            { icon: "📍", label: "City", value: user.city },
+            { icon: "✉", label: "Email",       value: user.email },
+            { icon: "📱", label: "Mobile",      value: user.mobile_number },
+            { icon: "🏢", label: "Firm",        value: user.firm_name },
+            { icon: "🪪", label: "License",     value: user.license_number },
+            { icon: "📍", label: "City",        value: user.city },
+            { icon: "🎂", label: "Birthday",    value: user.date_of_birth },
+            { icon: "💍", label: "Anniversary", value: user.anniversary_date },
           ].map(({ icon, label, value }) =>
             value ? (
               <div key={label} style={{
@@ -318,13 +411,13 @@ function ArchCard({ user, onTap, onApprove, approving }) {
 
 /* ─── Main Page ─── */
 export default function AdminArchitectsPage() {
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
-  const [filter, setFilter] = useState("all");
-  const [search, setSearch] = useState("");
+  const [users, setUsers]       = useState([]);
+  const [loading, setLoading]   = useState(true);
+  const [error, setError]       = useState("");
+  const [filter, setFilter]     = useState("all");
+  const [search, setSearch]     = useState("");
   const [approving, setApproving] = useState(null);
-  const [toast, setToast] = useState(null);
+  const [toast, setToast]       = useState(null);
   const [selected, setSelected] = useState(null);
 
   const fetchUsers = useCallback(async () => {
@@ -366,23 +459,24 @@ export default function AdminArchitectsPage() {
   };
 
   const counts = {
-    all: users.length,
-    pending: users.filter((u) => !u.is_approved).length,
+    all:      users.length,
+    pending:  users.filter((u) => !u.is_approved).length,
     approved: users.filter((u) => u.is_approved).length,
   };
 
   const filtered = users.filter((u) => {
     const statusOk =
       filter === "all" ||
-      (filter === "pending" && !u.is_approved) ||
-      (filter === "approved" && u.is_approved);
+      (filter === "pending"  && !u.is_approved) ||
+      (filter === "approved" &&  u.is_approved);
     const q = search.toLowerCase();
-    return statusOk && (!q || [u.full_name, u.email, u.firm_name, u.mobile_number].some((v) => v?.toLowerCase().includes(q)));
+    return statusOk && (!q || [u.full_name, u.email, u.firm_name, u.mobile_number]
+      .some((v) => v?.toLowerCase().includes(q)));
   });
 
   const TABS = [
-    { key: "all", label: "All" },
-    { key: "pending", label: "Pending" },
+    { key: "all",      label: "All" },
+    { key: "pending",  label: "Pending" },
     { key: "approved", label: "Approved" },
   ];
 
@@ -427,7 +521,10 @@ export default function AdminArchitectsPage() {
           borderBottom: "1px solid #F3F4F6",
         }}>
           {/* Title row */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
+          <div style={{
+            display: "flex", alignItems: "center",
+            justifyContent: "space-between", marginBottom: 14,
+          }}>
             <div>
               <div style={{ fontSize: 22, fontWeight: 800, color: "#111827", letterSpacing: "-0.5px" }}>
                 Architects
@@ -514,10 +611,10 @@ export default function AdminArchitectsPage() {
           gap: 10, padding: "16px 16px 0",
         }}>
           {[
-            { label: "Total", value: counts.all, accent: "#6366F1", light: "#EEF2FF" },
-            { label: "Pending", value: counts.pending, accent: "#F59E0B", light: "#FFFBEB" },
+            { label: "Total",    value: counts.all,      accent: "#6366F1", light: "#EEF2FF" },
+            { label: "Pending",  value: counts.pending,  accent: "#F59E0B", light: "#FFFBEB" },
             { label: "Approved", value: counts.approved, accent: "#10B981", light: "#ECFDF5" },
-          ].map(({ label, value, accent, light }) => (
+          ].map(({ label, value, accent }) => (
             <div key={label} style={{
               background: "#fff", borderRadius: 16,
               border: "1px solid #F3F4F6",
@@ -530,12 +627,18 @@ export default function AdminArchitectsPage() {
               }}>
                 {loading ? "—" : value}
               </div>
-              <div style={{ fontSize: 11, color: "#9CA3AF", fontWeight: 600, marginTop: 5, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+              <div style={{
+                fontSize: 11, color: "#9CA3AF", fontWeight: 600,
+                marginTop: 5, letterSpacing: "0.04em", textTransform: "uppercase",
+              }}>
                 {label}
               </div>
             </div>
           ))}
         </div>
+
+        {/* ── Celebration Strip ── */}
+        {!loading && <CelebrationStrip users={users} />}
 
         {/* ── List ── */}
         <div style={{ padding: "14px 16px 80px", display: "flex", flexDirection: "column", gap: 10 }}>

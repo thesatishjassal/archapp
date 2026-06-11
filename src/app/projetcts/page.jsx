@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
+import ProtectedRoute from '../componets/ProtectedRoute';
 
 /* ─── LOADING OVERLAY ─── */
 function LoadingOverlay({ message = "Please wait…" }) {
@@ -290,7 +291,7 @@ export default function ProjectsPage() {
 
   /* ──────────────── RENDER ──────────────── */
   return (
-    <>
+    <><ProtectedRoute >
       <Toaster position="top-right" richColors toastOptions={{
         duration: 3000,
         style: { fontFamily: "inherit", fontSize: 13, borderRadius: 10, border: "1px solid #eeebe6", boxShadow: "0 4px 16px rgba(0,0,0,0.08)" },
@@ -709,7 +710,7 @@ export default function ProjectsPage() {
             saving={saving}
           />
         )}
-      </section>
+      </section></ProtectedRoute >
     </>
   );
 }
