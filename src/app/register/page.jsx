@@ -701,6 +701,7 @@ export default function RegisterPage() {
                           >
                             <option value="Architect">Architect</option>
                             <option value="Interior Designer">Interior Designer</option>
+                            <option value="Sales Person">Sales Person</option>
                           </select>
                         </div>
                       </div>
