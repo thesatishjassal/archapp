@@ -166,7 +166,11 @@ function CelebrationStrip({ users }) {
 }
 
 /* ─── Drawer ─── */
-function ProfileDrawer({ user, onClose, onApprove, approving }) {
+function ProfileDrawer({  user,
+  onClose,
+  onApprove,
+  onDelete,
+  approving, }) {
   if (!user) return null;
   const { bg, fg } = getPalette(user.full_name);
 
@@ -277,41 +281,51 @@ function ProfileDrawer({ user, onClose, onApprove, approving }) {
         </div>
 
         {/* CTA */}
-        <div style={{ padding: "20px 24px 32px" }}>
-          {!user.is_approved ? (
-            <button
-              disabled={approving === user.id}
-              onClick={() => onApprove(user.id, user.full_name)}
-              style={{
-                width: "100%", height: 52, borderRadius: 14,
-                background: approving === user.id ? "#D1D5DB" : "#111827",
-                color: "#fff", border: "none",
-                fontSize: 15, fontWeight: 700, cursor: "pointer",
-                letterSpacing: "-0.2px",
-                fontFamily: "'DM Sans', sans-serif",
-                transition: "transform 0.1s",
-              }}
-            >
-              {approving === user.id ? "Approving…" : "✓  Approve Architect"}
-            </button>
-          ) : (
-            <div style={{
-              height: 52, borderRadius: 14,
-              background: "#ECFDF5", border: "1.5px solid #A7F3D0",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: 15, fontWeight: 700, color: "#065F46",
-            }}>
-              ✓  Already Active
-            </div>
-          )}
-        </div>
+<div style={{ padding: "20px 24px 32px" }}>
+  {!user.is_approved ? (
+    <button
+      disabled={approving === user.id}
+      onClick={() => onApprove(user.id, user.full_name)}
+    >
+      {approving === user.id
+        ? "Approving…"
+        : "✓ Approve Architect"}
+    </button>
+  ) : (
+    <div>✓ Already Active</div>
+  )}
+
+  <button
+    onClick={() => onDelete(user.id, user.full_name)}
+    style={{
+      width: "100%",
+      height: 52,
+      borderRadius: 14,
+      background: "#FEF2F2",
+      color: "#DC2626",
+      border: "1px solid #FECACA",
+      fontSize: 15,
+      fontWeight: 700,
+      cursor: "pointer",
+      marginTop: 10,
+    }}
+  >
+    🗑 Delete Architect
+  </button>
+</div>
       </div>
     </>
   );
 }
 
 /* ─── Architect Card ─── */
-function ArchCard({ user, onTap, onApprove, approving }) {
+function ArchCard({
+  user,
+  onTap,
+  onApprove,
+  onDelete,
+  approving,
+}) {
   return (
     <div
       onClick={() => onTap(user)}
@@ -404,7 +418,26 @@ function ArchCard({ user, onTap, onApprove, approving }) {
         >
           {approving === user.id ? "Approving…" : "Approve"}
         </button>
-      )}
+      )}<button
+  onClick={(e) => {
+    e.stopPropagation();
+    onDelete(user.id, user.full_name);
+  }}
+  style={{
+    width: "100%",
+    height: 52,
+    borderRadius: 14,
+    background: "#FEF2F2",
+    color: "#DC2626",
+    border: "1px solid #FECACA",
+    fontSize: 15,
+    fontWeight: 700,
+    cursor: "pointer",
+    marginTop: 10,
+  }}
+>
+  🗑 Delete Architect
+</button>
     </div>
   );
 }
@@ -436,7 +469,38 @@ export default function AdminArchitectsPage() {
   }, []);
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
+const deleteUser = async (userId, name) => {
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete ${name}?`
+  );
 
+  if (!confirmDelete) return;
+
+  try {
+    const res = await fetch(
+      `${API_BASE}/arch-register/${userId}`,
+      {
+        method: "DELETE",
+      }
+    );
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.detail || "Delete failed");
+    }
+
+    setUsers((prev) => prev.filter((u) => u.id !== userId));
+
+    if (selected?.id === userId) {
+      setSelected(null);
+    }
+
+    showToast("success", `${name} deleted successfully`);
+  } catch (err) {
+    showToast("error", err.message);
+  }
+};
   const approveUser = async (userId, name) => {
     setApproving(userId);
     try {
@@ -682,12 +746,19 @@ export default function AdminArchitectsPage() {
 
       {/* ── Drawer ── */}
       {selected && (
-        <ProfileDrawer
-          user={selected}
-          onClose={() => setSelected(null)}
-          onApprove={(id, name) => { setSelected(null); setTimeout(() => approveUser(id, name), 200); }}
-          approving={approving}
-        />
+<ProfileDrawer
+  user={selected}
+  onClose={() => setSelected(null)}
+  onApprove={(id, name) => {
+    setSelected(null);
+    setTimeout(() => approveUser(id, name), 200);
+  }}
+  onDelete={(id, name) => {
+    setSelected(null);
+    setTimeout(() => deleteUser(id, name), 200);
+  }}
+  approving={approving}
+/>
       )}
 
       {/* ── Toast ── */}

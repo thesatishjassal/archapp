@@ -195,7 +195,7 @@ export default function ArchitectPortal() {
 
             <div className="ap-footer">
               For architects &amp; interior designers only.<br />
-              Need help? <a href="mailto:support@panvic.in">support@panvic.in</a>
+              Need help? <a href="mailto:support@panvik.com">support@panvik.com</a>
             </div>
           </div>
 

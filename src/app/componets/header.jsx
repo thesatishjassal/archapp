@@ -32,7 +32,8 @@ useEffect(() => {
       setUser(JSON.parse(userData));
     }
   }
-}, []);
+  console.log('User data from localStorage:', user);
+}, [user]);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -104,16 +105,16 @@ useEffect(() => {
                   aria-haspopup="true"
                 >
 <div className="header__avatar">
-  {user?.name?.charAt(0)?.toUpperCase() || 'U'}
+  {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
 </div>
 
 <div className="header__profile-info">
   <span className="header__name">
-    {user?.name || 'User'}
+    {user?.full_name || 'User'}
   </span>
 
   <span className="header__role">
-    {user?.profession || 'Architect'}
+    {user?.profession || 'Sales Person '}
   </span>
 </div>
 
