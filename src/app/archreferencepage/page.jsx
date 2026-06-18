@@ -220,7 +220,7 @@ function handleInput(e) {
           onFocus={() => results.length && setOpen(true)}
           autoComplete="off"
         />
-        <span style={{ position: "absolute", right: 10, top: "50%", transform: "translateY(-50%)" }}>
+        <span style={{ position: "absolute", righ: 10, top: "50%", transform: "translateY(-50%)" }}>
           {busy ? <Spinner dark /> : (
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#9CA3AF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>

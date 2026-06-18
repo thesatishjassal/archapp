@@ -418,7 +418,8 @@ function ArchCard({
         >
           {approving === user.id ? "Approving…" : "Approve"}
         </button>
-      )}<button
+      )}
+      {/* <button
   onClick={(e) => {
     e.stopPropagation();
     onDelete(user.id, user.full_name);
@@ -437,7 +438,7 @@ function ArchCard({
   }}
 >
   🗑 Delete Architect
-</button>
+</button> */}
     </div>
   );
 }

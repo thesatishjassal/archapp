@@ -1,39 +1,35 @@
-'use client';
+"use client";
 
-import { useEffect, useRef, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
   const pathname = usePathname();
 
   // Hide header on homepage
-if (
-  pathname === '/' ||
-  pathname === '/register' ||
-  pathname === '/login'
-) {
-  return null;
-}
+  if (pathname === "/" || pathname === "/register" || pathname === "/login") {
+    return null;
+  }
 
   const [open, setOpen] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const dropdownRef = useRef(null);
   const [user, setUser] = useState(null);
 
-useEffect(() => {
-  const verified = localStorage.getItem('arch_user_verified');
+  useEffect(() => {
+    const verified = localStorage.getItem("arch_user_verified");
 
-  if (verified === 'true') {
-    setIsLoggedIn(true);
+    if (verified === "true") {
+      setIsLoggedIn(true);
 
-    const userData = localStorage.getItem('arch_user');
+      const userData = localStorage.getItem("arch_user");
 
-    if (userData) {
-      setUser(JSON.parse(userData));
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
     }
-  }
-  console.log('User data from localStorage:', user);
-}, [user]);
+    console.log("User data from localStorage:", user);
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e) => {
@@ -42,17 +38,17 @@ useEffect(() => {
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
 
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem('arch_user_verified');
+    localStorage.removeItem("arch_user_verified");
     setIsLoggedIn(false);
-    window.location.href = '/login';
+    window.location.href = "/login";
   };
 
   return (
@@ -64,7 +60,6 @@ useEffect(() => {
 
       <header className="header">
         <div className="header__inner">
-
           {/* LOGO */}
           <a href="/" className="header__logo-wrap">
             <img
@@ -76,7 +71,6 @@ useEffect(() => {
 
           {/* RIGHT */}
           <div className="header__right">
-
             {!isLoggedIn ? (
               <div className="header__auth">
                 <a
@@ -86,70 +80,47 @@ useEffect(() => {
                   Login
                 </a>
 
-                <a
-                  href="/register"
-                  className="header__button"
-                >
+                <a href="/register" className="header__button">
                   Register
                 </a>
               </div>
             ) : (
-              <div
-                className="header__profile"
-                ref={dropdownRef}
-              >
+              <div className="header__profile" ref={dropdownRef}>
                 <button
                   className="header__profile-btn"
                   onClick={() => setOpen(!open)}
                   aria-expanded={open}
                   aria-haspopup="true"
                 >
-<div className="header__avatar">
-  {user?.full_name?.charAt(0)?.toUpperCase() || 'U'}
-</div>
+                  <div className="header__avatar">
+                    {user?.full_name?.charAt(0)?.toUpperCase() || "U"}
+                  </div>
 
-<div className="header__profile-info">
-  <span className="header__name">
-    {user?.full_name || 'User'}
-  </span>
+                  <div className="header__profile-info">
+                    <span className="header__name">
+                      {user?.full_name || "User"}
+                    </span>
 
-  <span className="header__role">
-    {user?.profession || 'Sales Person '}
-  </span>
-</div>
+                    <span className="header__role">
+                      {user?.profession || "Sales Person "}
+                    </span>
+                  </div>
 
-                  <span
-                    className={`header__arrow ${
-                      open ? 'active' : ''
-                    }`}
-                  >
+                  <span className={`header__arrow ${open ? "active" : ""}`}>
                     ⌄
                   </span>
                 </button>
 
-                <div
-                  className={`header__dropdown ${
-                    open ? 'active' : ''
-                  }`}
-                >
-                  <a
-                    href="/profile"
-                    className="header__dropdown-link"
-                  >
+                <div className={`header__dropdown ${open ? "active" : ""}`}>
+                  <a href="/profile" className="header__dropdown-link">
                     My Profile
                   </a>
 
-                  <a
-                    href="/commissions"
-                    className="header__dropdown-link"
-                  >
+                  <a href="/commissions" className="header__dropdown-link">
                     Reward Points
                   </a>
 
-                  <a
-                    href="/projetcts"
-                    className="header__dropdown-link"
-                  >
+                  <a href="/projetcts" className="header__dropdown-link">
                     My Projects
                   </a>
 
@@ -162,7 +133,6 @@ useEffect(() => {
                 </div>
               </div>
             )}
-
           </div>
         </div>
       </header>
