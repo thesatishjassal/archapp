@@ -283,9 +283,9 @@
 /* LOGO */
 
 .header__logo {
-  width: 100%;
-  max-width: 150px;
-  display: block;
+    width: 100%;
+    max-width: 110px;
+    display: block;
 }
 
 /* RIGHT */

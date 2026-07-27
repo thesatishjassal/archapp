@@ -1,8 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
-const API_BASE = "https://api.panvic.in";
+const API_BASE = "https://api.panvic.in/api";
 
 function Spinner() {
   return <span className="spinner" />;
@@ -12,11 +14,12 @@ export default function AddSalesPersonPage() {
   const [loading, setLoading] = useState(false);
   const [architects, setArchitects] = useState([]);
   const [selectedArchitect, setSelectedArchitect] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     phone: "",
-    architecture_name: "",
+    architecture_id: "",
     company_name: "",
   });
 
@@ -32,8 +35,10 @@ export default function AddSalesPersonPage() {
         (arch) => arch.role !== "admin"
       );
       setArchitects(architectsList);
+      console.log("Fetched architects:", architectsList);
     } catch (error) {
       console.error(error);
+      toast.error("Failed to load architects");
     }
   };
 
@@ -46,47 +51,77 @@ export default function AddSalesPersonPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     setLoading(true);
+    setFieldErrors({});
 
     try {
       const payload = {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        architecture_name: formData.architecture_name,
+        architecture_id: formData.architecture_id,
         company_name: formData.company_name,
       };
 
-      console.log("Submitting payload:", payload);
-
       const response = await fetch(`${API_BASE}/salespersons/`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify(payload),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Logs full FastAPI validation detail to console for debugging
-        console.error("API error:", JSON.stringify(data, null, 2));
-        const detail = Array.isArray(data.detail)
-          ? data.detail.map((err) => `${err.loc?.join(".")} — ${err.msg}`).join("\n")
-          : data.detail || "Something went wrong";
-        throw new Error(detail);
+        // Parse error response
+        const errors = {};
+        let errorMessage = "";
+
+        if (data.detail) {
+          errorMessage = data.detail;
+        } else if (typeof data === "object") {
+          // Check for field-specific errors
+          Object.keys(data).forEach((key) => {
+            if (Array.isArray(data[key])) {
+              errors[key] = data[key].join(", ");
+            } else if (typeof data[key] === "string") {
+              errors[key] = data[key];
+            }
+          });
+
+          // Build error message from field errors
+          if (Object.keys(errors).length > 0) {
+            const errorMessages = Object.entries(errors).map(
+              ([field, message]) => `${field}: ${message}`
+            );
+            errorMessage = errorMessages.join(" | ");
+            setFieldErrors(errors);
+          } else {
+            errorMessage = "Something went wrong";
+          }
+        }
+        console.error("Error response:", data);
+        throw new Error(errorMessage);
       }
 
-      alert("Sales Person Added Successfully");
+      toast.success("Sales person added successfully! 🎉");
+      setFieldErrors({});
+
       setFormData({
         name: "",
         email: "",
         phone: "",
-        architecture_name: "",
+        architecture_id: "",
         company_name: "",
       });
+
       setSelectedArchitect("");
     } catch (error) {
-      alert(error.message);
+      const errorMsg = error.message || "An error occurred";
+      toast.error(errorMsg);
+      console.error(error);
     } finally {
       setLoading(false);
     }
@@ -105,11 +140,11 @@ export default function AddSalesPersonPage() {
 
         /* Block: page */
         .page {
-          min-height: 100vh;
           background: #f5f4f0;
           display: flex;
           justify-content: center;
           align-items: center;
+          min-height: 100vh;
           padding: 2rem;
           font-family: 'DM Sans', sans-serif;
         }
@@ -117,7 +152,7 @@ export default function AddSalesPersonPage() {
         /* Block: card */
         .card {
           width: 100%;
-          max-width: 700px;
+          max-width: 500px;
           background: #fff;
           border-radius: 2px;
           overflow: hidden;
@@ -135,10 +170,11 @@ export default function AddSalesPersonPage() {
         /* Element: card__title */
         .card__title {
           font-family: 'DM Serif Display', serif;
-          font-size: 25px;
+          font-size: 22px;
           color: #1a1a1a;
           margin-bottom: 0.4rem;
         }
+      
 
         /* Element: card__subtitle */
         .card__subtitle {
@@ -149,6 +185,17 @@ export default function AddSalesPersonPage() {
         /* Element: card__body */
         .card__body {
           padding: 2rem 2.5rem;
+        }
+
+        /* Block: row */
+        .row {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 1rem;
+        }
+
+        .row .field {
+          margin-bottom: 0;
         }
 
         /* Block: field */
@@ -178,11 +225,30 @@ export default function AddSalesPersonPage() {
           outline: none;
           border-radius: 2px;
           transition: 0.2s;
+          font-family: 'DM Sans', sans-serif;
         }
 
         .field__input:focus {
           border-color: #1a1a1a;
           background: #fff;
+        }
+
+        .field__input.field__input--error {
+          border-color: #ef4444;
+          background: #fef2f2;
+        }
+
+        .field__input.field__input--error:focus {
+          border-color: #ef4444;
+          background: #fff;
+        }
+
+        /* Element: field__error */
+        .field__error {
+          font-size: 0.75rem;
+          color: #ef4444;
+          margin-top: 0.4rem;
+          font-weight: 500;
         }
 
         /* Block: btn */
@@ -200,6 +266,8 @@ export default function AddSalesPersonPage() {
           align-items: center;
           justify-content: center;
           gap: 0.5rem;
+          transition: 0.2s;
+          margin-top: 1rem;
         }
 
         .btn:hover {
@@ -229,7 +297,57 @@ export default function AddSalesPersonPage() {
             transform: rotate(360deg);
           }
         }
+
+        /* Toast Custom Styling */
+        :global(.Toastify__toast-container) {
+          padding: 0;
+        }
+
+        :global(.Toastify__toast) {
+          font-family: 'DM Sans', sans-serif;
+          border-radius: 4px;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+          padding: 1rem;
+        }
+
+        :global(.Toastify__toast--success) {
+          background: #10b981;
+        }
+
+        :global(.Toastify__toast--error) {
+          background: #ef4444;
+        }
+
+        :global(.Toastify__toast--warning) {
+          background: #f59e0b;
+        }
+
+        :global(.Toastify__toast--info) {
+          background: #3b82f6;
+        }
+
+        :global(.Toastify__toast-body) {
+          color: white;
+          font-weight: 500;
+        }
+
+        :global(.Toastify__progress-bar) {
+          height: 3px;
+        }
       `}</style>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={4000}
+        hideProgressBar={false}
+        newestOnTop={true}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
 
       <div className="page">
         <div className="card">
@@ -238,106 +356,134 @@ export default function AddSalesPersonPage() {
             <p className="card__subtitle">
               Create a new sales representative account.
             </p>
-          </div>
+          </div>  
 
           <form onSubmit={handleSubmit}>
-<div className="card__body">
-  {/* Row 1: Full Name + Email */}
-  <div className="row">
-    <div className="field">
-      <label className="field__label">Full Name</label>
-      <input
-        className="field__input"
-        name="name"
-        placeholder="Enter full name"
-        value={formData.name}
-        onChange={handleChange}
-        required
-      />
-    </div>
+            <div className="card__body">
+              {/* Row 1: Full Name + Email */}
+              <div className="row">
+                <div className="field">
+                  <label className="field__label">Full Name</label>
+                  <input
+                    className={`field__input${
+                      fieldErrors.name ? " field__input--error" : ""
+                    }`}
+                    name="name"
+                    placeholder="Enter full name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.name && (
+                    <div className="field__error">⚠️ {fieldErrors.name}</div>
+                  )}
+                </div>
 
-    <div className="field">
-      <label className="field__label">Email Address</label>
-      <input
-        type="email"
-        className="field__input"
-        name="email"
-        placeholder="john@example.com"
-        value={formData.email}
-        onChange={handleChange}
-        required
-      />
-    </div>
-  </div>
+                <div className="field">
+                  <label className="field__label">Email Address</label>
+                  <input
+                    type="email"
+                    className={`field__input${
+                      fieldErrors.email ? " field__input--error" : ""
+                    }`}
+                    name="email"
+                    placeholder="john@example.com"
+                    value={formData.email}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.email && (
+                    <div className="field__error">⚠️ {fieldErrors.email}</div>
+                  )}
+                </div>
+              </div>
 
-  {/* Row 2: Phone + Company */}
-  <div className="row">
-    <div className="field">
-      <label className="field__label">Phone Number</label>
-      <input
-        className="field__input"
-        name="phone"
-        placeholder="+91 9876543210"
-        value={formData.phone}
-        onChange={handleChange}
-        required
-      />
-    </div>
+              {/* Row 2: Phone + Company */}
+              <div className="row">
+                <div className="field">
+                  <label className="field__label">Phone Number</label>
+                  <input
+                    className={`field__input${
+                      fieldErrors.phone ? " field__input--error" : ""
+                    }`}
+                    name="phone"
+                    placeholder="+91 9876543210"
+                    value={formData.phone}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.phone && (
+                    <div className="field__error">⚠️ {fieldErrors.phone}</div>
+                  )}
+                </div>
 
-    <div className="field">
-      <label className="field__label">Company Name</label>
-      <input
-        className="field__input"
-        name="company_name"
-        placeholder="Panvik"
-        value={formData.company_name}
-        onChange={handleChange}
-        required
-      />
-    </div>
-  </div>
+                <div className="field">
+                  <label className="field__label">Company Name</label>
+                  <input
+                    className={`field__input${
+                      fieldErrors.company_name ? " field__input--error" : ""
+                    }`}
+                    name="company_name"
+                    placeholder="Panvik"
+                    value={formData.company_name}
+                    onChange={handleChange}
+                    required
+                  />
+                  {fieldErrors.company_name && (
+                    <div className="field__error">
+                      ⚠️ {fieldErrors.company_name}
+                    </div>
+                  )}
+                </div>
+              </div>
 
-  {/* Row 3: Architecture Name (full width) */}
-  <div className="field">
-    <label className="field__label">Architecture Name</label>
-<select
-  className="field__input"
-  name="architecture_name"
-  value={formData.architecture_name}
-  onChange={(e) => {
-    setSelectedArchitect(e.target.value);
+              {/* Row 3: Architecture Name (full width) */}
+              <div className="field">
+                <label className="field__label">Architecture Name</label>
+                <select
+                  className={`field__input${
+                    fieldErrors.architecture_id ? " field__input--error" : ""
+                  }`}
+                  name="architecture_id"
+                  value={formData.architecture_id}
+                  onChange={(e) => {
+                    setSelectedArchitect(e.target.value);
+                    setFormData((prev) => ({
+                      ...prev,
+                      architecture_id: e.target.value,
+                    }));
+                  }}
+                  required
+                >
+                  <option value="">Select Architect</option>
+                  {architects.map((arch) => (
+                    <option key={arch.id} value={arch.id}>
+                      {arch.full_name}
+                    </option>
+                  ))}
+                </select>
+                {fieldErrors.architecture_id && (
+                  <div className="field__error">
+                    ⚠️ {fieldErrors.architecture_id}
+                  </div>
+                )}
+              </div>
 
-    setFormData((prev) => ({
-      ...prev,
-      architecture_name: e.target.value,
-    }));
-  }}
-  required
->
-  <option value="">Select Architect</option>
-  {architects.map((arch) => (
-    <option key={arch.id} value={arch.full_name}>
-      {arch.full_name}
-    </option>
-  ))}
-</select>
-  </div>
-
-  <button
-    type="submit"
-    className={`btn${loading ? " btn--disabled" : ""}`}
-    disabled={loading}
-  >
-    {loading ? (
-      <>
-        <Spinner />
-        Creating...
-      </>
-    ) : (
-      "Add Sales Person"
-    )}
-  </button>
-</div>
+              <button
+                type="submit"
+                className={`btn${loading ? " btn--disabled" : ""}`}
+                disabled={loading}
+              >
+                {loading ? (
+                  <>
+                    <Spinner />
+                    Creating...
+                  </>
+                ) : (
+                  "Add Sales Person"
+                )}
+              </button>
+            </div>
           </form>
         </div>
       </div>

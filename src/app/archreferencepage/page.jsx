@@ -231,8 +231,8 @@ function handleInput(e) {
 
       {open && results.length > 0 && (
         <div style={styles.dropdown}>
-          {results.map((a) => (
-            <div key={a.id} style={styles.dropdownItem} onMouseDown={() => select(a)}>
+           {results.map((a) => (
+             <div key={a.id} style={styles.dropdownItem} onMouseDown={() => select(a)}>
               <Avatar name={a.full_name} index={a.id} size={28} />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "#111827" }}>{a.full_name}</div>

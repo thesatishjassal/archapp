@@ -563,7 +563,7 @@ export default function ProfilePage() {
 
   /* ──────────────── RENDER ──────────────── */
   return (
-    <><ProtectedRoute>
+    <>
       <Toaster
         position="top-right"
         richColors
@@ -610,8 +610,16 @@ export default function ProfilePage() {
         .profile__accordion-header:hover { color: #6b6259; }
         .profile__tab-edit:hover { background: #fff; border-color: #c9b99a; color: #1a1714; }
         .profile__accordion-body { padding: 4px 0 14px; }
-        .profile__tab-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        .profile__item { background: #faf8f5; border: 1px solid #f0ede8; border-radius: 9px; padding: 9px 11px; display: flex; flex-direction: column; gap: 2px; }
+        .profile__tab-grid { display: grid; grid-template-columns: 1fr; gap: 8px; }
+       .profile__item {
+    background: #faf8f5;
+    border: 1px solid #f0ede8;
+    border-radius: 9px;
+    padding: 4px 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
         .profile__item span { font-size: 10px; font-weight: 600; color: #b09070; text-transform: uppercase; letter-spacing: 0.5px; }
         .profile__item h4 { font-size: 13px; font-weight: 500; color: #1a1714; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .profile__section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
@@ -928,7 +936,7 @@ export default function ProfilePage() {
             onClose={closeProjectModals}
           />
         )}
-      </section></ProtectedRoute>
+      </section>
     </>
   );
 }

@@ -211,11 +211,11 @@ export default function RegisterPage() {
         }
 
         /* ── HEADER ── */
-        .reg-header {
-          padding: 2.5rem 2.5rem 0;
-          border-bottom: 1px solid #f0ede8;
-          padding-bottom: 1.75rem;
-        }
+.reg-header {
+    padding: 1.5rem 1.5rem 0;
+    border-bottom: 1px solid #f0ede8;
+    padding-bottom: 1.5rem;
+}
 
         .reg-brand {
           font-family: 'DM Serif Display', serif;
@@ -280,9 +280,9 @@ export default function RegisterPage() {
         }
 
         /* ── BODY ── */
-        .reg-body {
-          padding: 2rem 2.5rem 2.5rem;
-        }
+.reg-body {
+    padding: 1rem 1.5rem 1.5rem;
+}
 
         .reg-section-label {
           font-size: 0.6875rem;
@@ -871,4 +871,4 @@ export default function RegisterPage() {
       </div>
     </>
   );
-}
+};
