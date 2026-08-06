@@ -81,6 +81,28 @@ function CloseIcon() {
   );
 }
 
+function PlusIcon() {
+  return (
+    <svg viewBox="0 0 16 16" fill="none" width="14" height="14">
+      <path
+        d="M8 3v10M3 8h10"
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" width="24" height="24" stroke="currentColor" strokeWidth="1.5">
+      <path d="M12 16V8M8 12l4-4 4 4" strokeLinecap="round" strokeLinejoin="round" />
+      <rect x="3" y="3" width="18" height="18" rx="4" />
+    </svg>
+  );
+}
+
 // Turn a snake_case / camelCase key into a readable label
 function humanizeKey(key) {
   return key
@@ -128,15 +150,33 @@ function StatusBadge({ status }) {
   );
 }
 
+// Empty add-project form state
+const emptyAddForm = {
+  architectId: "",
+  title: "",
+  location: "",
+  description: "",
+  status: "In Progress",
+  image: "",
+  imageFile: null,
+  client: "",
+  budget: "",
+  date: "",
+};
+
 export default function ProjectsWithArchitectPage() {
   // ---- Auth / salesperson profile (optional — page works with or without login) ----
   const [salesperson, setSalesperson] = useState(null);
   const [checkedAuth, setCheckedAuth] = useState(false);
 
-  // ---- Architect list ----
+  // ---- Architect list (for the accordion — may be restricted to linked IDs) ----
   const [architects, setArchitects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // ---- Full architect list, always unrestricted — used for the Add Project dropdown ----
+  const [allArchitects, setAllArchitects] = useState([]);
+  const [loadingAllArchitects, setLoadingAllArchitects] = useState(true);
 
   // ---- Accordion state: which architect is open, and per-architect project cache ----
   const [openId, setOpenId] = useState(null);
@@ -147,15 +187,29 @@ export default function ProjectsWithArchitectPage() {
   // ---- Project detail modal ----
   const [modalProject, setModalProject] = useState(null);
 
-  // Close modal on Escape key
+  // ---- Add Project (assign to architect) modal ----
+  const [showAddModal, setShowAddModal] = useState(false);
+  const [addSaving, setAddSaving] = useState(false);
+  const [addForm, setAddForm] = useState(emptyAddForm);
+
+  // ---- Manage linked architects modal (PUT /api/salespersons/{id}) ----
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [linkSaving, setLinkSaving] = useState(false);
+  const [selectedArchIds, setSelectedArchIds] = useState([]); // array of string ids
+
+  // Close modals on Escape key
   useEffect(() => {
-    if (!modalProject) return;
+    if (!modalProject && !showAddModal && !showLinkModal) return;
     const onKey = (e) => {
-      if (e.key === "Escape") setModalProject(null);
+      if (e.key === "Escape") {
+        setModalProject(null);
+        if (!addSaving) setShowAddModal(false);
+        if (!linkSaving) setShowLinkModal(false);
+      }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [modalProject]);
+  }, [modalProject, showAddModal, showLinkModal, addSaving, linkSaving]);
 
   // Load the logged-in salesperson from the same cookie Header.jsx reads
   useEffect(() => {
@@ -185,6 +239,26 @@ export default function ProjectsWithArchitectPage() {
     if (checkedAuth) fetchArchitects();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [checkedAuth, salesperson]);
+
+  // Always fetch the complete architect list once, for the Add Project dropdown
+  useEffect(() => {
+    fetchAllArchitects();
+  }, []);
+
+  const fetchAllArchitects = async () => {
+    setLoadingAllArchitects(true);
+    try {
+      const response = await fetch(`${API_BASE}/arch-register/`);
+      const result = await response.json();
+      const list = (result.data || []).filter((a) => a.role !== "admin");
+      setAllArchitects(list);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to load architect list");
+    } finally {
+      setLoadingAllArchitects(false);
+    }
+  };
 
   const fetchArchitects = async () => {
     setLoading(true);
@@ -219,8 +293,9 @@ export default function ProjectsWithArchitectPage() {
     }
   };
 
-  const fetchProjects = async (archId) => {
-    if (projectsByArch[archId]) return; // already cached
+  // `force` lets callers bypass the cache after adding a new project
+  const fetchProjects = async (archId, force = false) => {
+    if (!force && projectsByArch[archId]) return; // already cached
 
     setLoadingArch((prev) => ({ ...prev, [archId]: true }));
     setErrorArch((prev) => ({ ...prev, [archId]: null }));
@@ -257,6 +332,155 @@ export default function ProjectsWithArchitectPage() {
   const sectionLabel = isLinkedMode
     ? `Linked Architecture${linkedIds.length > 1 ? "s" : ""}`
     : "All Architects";
+
+  // ---- Add Project handlers ----
+  const openAddModal = () => {
+    setAddForm({
+      ...emptyAddForm,
+      // Pre-select the architect if the salesperson only has one linked
+      architectId:
+        isLinkedMode && linkedIds.length === 1 ? String(linkedIds[0]) : "",
+    });
+    setShowAddModal(true);
+  };
+
+  const handleAddFieldChange = (e) => {
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setAddForm((prev) => ({
+        ...prev,
+        image: URL.createObjectURL(file),
+        imageFile: file,
+      }));
+    }
+  };
+
+  const handleAddProjectSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!addForm.architectId) {
+      toast.error("Please select an architect to assign this project to");
+      return;
+    }
+    if (!addForm.title.trim()) {
+      toast.error("Please enter a project name");
+      return;
+    }
+
+    setAddSaving(true);
+    try {
+      const fd = new FormData();
+      fd.append("title", addForm.title);
+      fd.append("status", addForm.status);
+      // location/description/client are plain optional strings — fine to
+      // omit when blank. budget/date are typed (float/date) on the backend,
+      // so an empty string would fail FastAPI's Form validation; only send
+      // them when the user actually filled them in, so they come through
+      // as a true "field not sent" -> None on the server.
+      if (addForm.location) fd.append("location", addForm.location);
+      if (addForm.description) fd.append("description", addForm.description);
+      if (addForm.client) fd.append("client", addForm.client);
+      if (addForm.budget !== "" && addForm.budget !== null) {
+        fd.append("budget", addForm.budget);
+      }
+      if (addForm.date) fd.append("date", addForm.date);
+      if (addForm.imageFile) fd.append("image", addForm.imageFile);
+
+
+      const response = await fetch(
+        `${API_BASE}/projects/${addForm.architectId}`,
+        { method: "POST", body: fd }
+      );
+      const result = await response.json();
+
+      if (!response.ok || result.success === false) {
+        throw new Error(
+          result.message || result.detail || "Failed to add project"
+        );
+      }
+
+      // Ref
+      // 
+      // resh that architect's project list and expand their accordion
+      // so the salesperson sees the newly assigned project immediately.
+      await fetchProjects(addForm.architectId, true);
+      setOpenId(addForm.architectId);
+
+      toast.success("Project added and assigned successfully!");
+      setShowAddModal(false);
+      setAddForm(emptyAddForm);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to add project");
+    } finally {
+      setAddSaving(false);
+    }
+  };
+
+  // ---- Manage linked architects handlers ----
+  const openLinkModal = () => {
+    setSelectedArchIds(linkedIds.map(String));
+    setShowLinkModal(true);
+  };
+
+  const toggleArchSelection = (idStr) => {
+    setSelectedArchIds((prev) =>
+      prev.includes(idStr) ? prev.filter((x) => x !== idStr) : [...prev, idStr]
+    );
+  };
+
+  const handleUpdateLinkedArchitects = async (e) => {
+    e.preventDefault();
+    if (!salesperson?.id) return;
+
+    setLinkSaving(true);
+    try {
+      const idsAsNumbers = selectedArchIds.map((id) => Number(id));
+
+      const response = await fetch(
+        `${API_BASE}/salespersons/${salesperson.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ architecture_id: idsAsNumbers }),
+        }
+      );
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.detail ||
+            result.message ||
+            "Failed to update linked architects"
+        );
+      }
+
+      // Keep local state + cookie in sync so the accordion above (which
+      // derives linkedIds from salesperson.architecture_id) picks up the
+      // new selection immediately, without needing a page reload.
+      const updatedSalesperson = {
+        ...salesperson,
+        architecture_id: idsAsNumbers,
+      };
+      setSalesperson(updatedSalesperson);
+      document.cookie = `team_user=${encodeURIComponent(
+        JSON.stringify(updatedSalesperson)
+      )}; path=/`;
+
+      toast.success("Linked architects updated successfully!");
+      setShowLinkModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error(err.message || "Failed to update linked architects");
+    } finally {
+      setLinkSaving(false);
+    }
+  };
 
   return (
     <>
@@ -308,7 +532,7 @@ export default function ProjectsWithArchitectPage() {
           height: 56px;
           border-radius: 50%;
           background: #1a1a1a;
-          color: #fff;
+          color: #fff; 1 
           font-family: 'DM Serif Display', serif;
           font-size: 1.35rem;
           display: flex;
@@ -360,6 +584,81 @@ export default function ProjectsWithArchitectPage() {
           align-self: flex-start;
         }
 
+        .mp-card__side {
+          display: flex;
+          flex-direction: column;
+          align-items: flex-end;
+          gap: 0.5rem;
+          flex-shrink: 0;
+        }
+
+        .mp-link-btn {
+          background: none;
+          border: none;
+          padding: 0;
+          font-size: 0.72rem;
+          font-weight: 600;
+          color: #1a1a1a;
+          text-decoration: underline;
+          cursor: pointer;
+          font-family: 'DM Sans', sans-serif;
+          white-space: nowrap;
+        }
+
+        .mp-link-btn:hover { color: #666; }
+
+        .mp-check-list {
+          display: flex;
+          flex-direction: column;
+          gap: 0.35rem;
+          max-height: 300px;
+          overflow-y: auto;
+          border: 1.5px solid #e5e2dc;
+          border-radius: 4px;
+          padding: 0.5rem;
+        }
+
+        .mp-check-item {
+          display: flex;
+          align-items: center;
+          gap: 0.65rem;
+          padding: 0rem 0rem;
+          border-radius: 4px;
+          cursor: pointer;
+          transition: background 0.15s;
+        }
+
+        .mp-check-item:hover { background: #faf9f7; }
+
+        .mp-check-item input[type="checkbox"] {
+          width: 16px;
+          height: 16px;
+          accent-color: #1a1a1a;
+          flex-shrink: 0;
+          cursor: pointer;
+        }
+
+        .mp-check-item__label {
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+          min-width: 0;
+          font-size: 0.85rem;
+          color: #1a1a1a;
+          font-weight: 500;
+        }
+
+        .mp-check-item__sub {
+          font-size: 0.72rem;
+          color: #999;
+          font-weight: 400;
+        }
+
+        .mp-selected-count {
+          font-size: 0.75rem;
+          color: #666;
+        }
+
         /* ---- Section header ---- */
         .mp-page-title {
           font-family: 'DM Serif Display', serif;
@@ -368,16 +667,25 @@ export default function ProjectsWithArchitectPage() {
           margin-bottom: 1.5rem;
         }
 
+        .mp-toolbar {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 1rem;
+          margin-bottom: 0.6rem;
+        }
+
         .mp-section-label {
           font-size: 0.75rem;
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.08em;
           color: #999;
-          margin-bottom: 0.6rem;
           display: flex;
           align-items: center;
           gap: 0.5rem;
+          flex: 1;
+          min-width: 0;
         }
 
         .mp-section-label::after {
@@ -397,6 +705,28 @@ export default function ProjectsWithArchitectPage() {
           letter-spacing: normal;
           text-transform: none;
         }
+
+        .mp-add-btn {
+          display: inline-flex;
+          align-items: center;
+          gap: 0.4rem;
+          height: 34px;
+          padding: 0 1rem;
+          border-radius: 4px;
+          background: #1a1a1a;
+          color: #fff;
+          font-size: 0.78rem;
+          font-weight: 600;
+          font-family: 'DM Sans', sans-serif;
+          border: none;
+          cursor: pointer;
+          transition: background 0.15s;
+          white-space: nowrap;
+          flex-shrink: 0;
+        }
+
+        .mp-add-btn:hover { background: #333; }
+        .mp-add-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         .mp-state {
           padding: 2.5rem;
@@ -612,7 +942,7 @@ export default function ProjectsWithArchitectPage() {
           color: #ef4444;
         }
 
-        /* ---- Project detail modal ---- */
+        /* ---- Project detail modal / Add Project modal ---- */
         .mp-modal-overlay {
           position: fixed;
           inset: 0;
@@ -621,7 +951,7 @@ export default function ProjectsWithArchitectPage() {
           align-items: center;
           justify-content: center;
           padding: 1.5rem;
-          z-index: 1000;
+          z-index: 999999;
           font-family: 'DM Sans', sans-serif;
           animation: mp-fade-in 0.15s ease-out;
         }
@@ -635,12 +965,16 @@ export default function ProjectsWithArchitectPage() {
           background: #fff;
           border-radius: 2px;
           width: 100%;
-          max-width: 480px;
-          max-height: 82vh;
+          max-width: 400px;
+          max-height: 88vh;
           display: flex;
           flex-direction: column;
           box-shadow: 0 8px 40px rgba(0, 0, 0, 0.25);
           animation: mp-modal-in 0.18s ease-out;
+        }
+
+        .mp-modal--wide {
+          max-width: 540px;
         }
 
         @keyframes mp-modal-in {
@@ -723,6 +1057,136 @@ export default function ProjectsWithArchitectPage() {
           word-break: break-word;
         }
 
+        /* ---- Add Project form ---- */
+        .mp-form {
+          display: flex;
+          flex-direction: column;
+          gap: 0.9rem;
+          padding: 1.25rem 1.5rem 1.5rem;
+          overflow-y: auto;
+        }
+
+        .mp-form__upload {
+          display: block;
+          cursor: pointer;
+          border-radius: 4px;
+          overflow: hidden;
+          border: 1.5px dashed #e5e2dc;
+          transition: border-color 0.2s;
+        }
+
+        .mp-form__upload:hover { border-color: #1a1a1a; }
+
+        .mp-form__preview {
+          width: 100%;
+          height: 140px;
+          object-fit: cover;
+          display: block;
+        }
+
+        .mp-form__placeholder {
+          height: 100px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+          color: #999;
+          font-size: 0.8rem;
+          background: #faf9f7;
+        }
+
+        .mp-form__grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 0.75rem;
+        }
+
+        .mp-form__field {
+          display: flex;
+          flex-direction: column;
+          gap: 0.3rem;
+        }
+
+        .mp-form__field--full {
+          grid-column: 1 / 0;
+        }
+
+        .mp-form__label {
+          font-size: 0.68rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.05em;
+          color: #999;
+        }
+
+        .mp-form__input,
+        .mp-form__select,
+        .mp-form__textarea {
+          width: 100%;
+          height: 38px;
+          background: #faf9f7;
+          border: 1.5px solid #e5e2dc;
+          border-radius: 4px;
+          padding: 0 0.75rem;
+          font-size: 0.85rem;
+          color: #1a1a1a;
+          font-family: 'DM Sans', sans-serif;
+          outline: none;
+          transition: border-color 0.15s;
+        }
+
+        .mp-form__input:focus,
+        .mp-form__select:focus,
+        .mp-form__textarea:focus {
+          border-color: #1a1a1a;
+        }
+
+        .mp-form__textarea {
+          height: 35px;
+          padding: 0.6rem 0.75rem;
+          resize: none;
+        }
+
+        .mp-form__actions {
+          display: flex;
+          gap: 0.6rem;
+          padding-top: 0.9rem;
+          border-top: 1px solid #f0ede8;
+        }
+
+        .mp-form__btn {
+          flex: 1;
+          height: 38px;
+          border-radius: 4px;
+          font-size: 0.82rem;
+          font-weight: 600;
+          font-family: 'DM Sans', sans-serif;
+          cursor: pointer;
+          border: 1.5px solid transparent;
+          transition: 0.15s;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 0.4rem;
+        }
+
+        .mp-form__btn--primary {
+          background: #1a1a1a;
+          color: #fff;
+        }
+
+        .mp-form__btn--primary:hover { background: #333; }
+        .mp-form__btn--primary:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .mp-form__btn--ghost {
+          background: #fff;
+          color: #1a1a1a;
+          border-color: #e5e2dc;
+        }
+
+        .mp-form__btn--ghost:hover { background: #faf9f7; }
+
         :global(.Toastify__toast-container) {
           padding: 0;
         }
@@ -776,7 +1240,16 @@ export default function ProjectsWithArchitectPage() {
                   <span>{salesperson.company_name}</span>
                 </div>
               </div>
-              <div className="mp-badge">ID #{salesperson.id}</div>
+              <div className="mp-card__side">
+                <div className="mp-badge">ID #{salesperson.id}</div>
+                <button
+                  type="button"
+                  className="mp-link-btn"
+                  onClick={openLinkModal}
+                >
+                  Edit Linked Architects
+                </button>
+              </div>
             </div>
           )}
 
@@ -785,10 +1258,23 @@ export default function ProjectsWithArchitectPage() {
           )}
 
           {/* Architects — accordion, each expands to its projects */}
-          <div className="mp-section-label">
-            {sectionLabel}
-            {!loading && !error && (
-              <span className="mp-count">{architects.length}</span>
+          <div className="mp-toolbar">
+            <div className="mp-section-label">
+              {sectionLabel}
+              {!loading && !error && (
+                <span className="mp-count">{architects.length}</span>
+              )}
+            </div>
+
+            {!loadingAllArchitects && allArchitects.length > 0 && (
+              <button
+                type="button"
+                className="mp-add-btn"
+                onClick={openAddModal}
+              >
+                <PlusIcon />
+                Add Project
+              </button>
             )}
           </div>
 
@@ -963,6 +1449,284 @@ export default function ProjectsWithArchitectPage() {
                 </tbody>
               </table>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Project modal — sales rep assigns a new project to an architect */}
+      {showAddModal && (
+        <div
+          className="mp-modal-overlay"
+          onClick={() => !addSaving && setShowAddModal(false)}
+        >
+          <div
+            className="mp-modal mp-modal--wide"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="mp-modal__head">
+              <div className="mp-modal__title">Add Project</div>
+              <button
+                type="button"
+                className="mp-modal__close"
+                onClick={() => !addSaving && setShowAddModal(false)}
+                aria-label="Close"
+                disabled={addSaving}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <form className="mp-form" onSubmit={handleAddProjectSubmit}>
+              {/* <label htmlFor="mpProjectImage" className="mp-form__upload">
+                {addForm.image ? (
+                  <img
+                    src={addForm.image}
+                    alt="preview"
+                    className="mp-form__preview"
+                  />
+                ) : (
+                  <div className="mp-form__placeholder">
+                    <UploadIcon />
+                    <span>Upload Project Image</span>
+                  </div>
+                )}
+              </label> */}
+              <input
+                id="mpProjectImage"
+                type="file"
+                hidden
+                accept="image/*"
+                onChange={handleAddImageChange}
+              />
+
+              <div className="mp-form__grid">
+                <div className="mp-form__field mp-form__field--full">
+                  <label className="mp-form__label">
+                    Assign To Architect *
+                  </label>
+                  <select
+                    className="mp-form__select"
+                    name="architectId"
+                    value={addForm.architectId}
+                    onChange={handleAddFieldChange}
+                    required
+                    disabled={loadingAllArchitects}
+                  >nnznznzn
+                    <option value="">
+                      {loadingAllArchitects
+                        ? "Loading architects…"
+                        : "Select architect…"}
+                    </option>
+                    {allArchitects.map((a) => {
+                      const label = [a.full_name, a.firm_name]
+                        .filter(Boolean)
+                        .join(" — ") || a.email || `Architect #${a.id}`;
+                      return (
+                        <option key={a.id} value={a.id}>
+                          {label}
+                        </option>
+                      );
+                    })}
+                  </select>
+                </div>
+
+                <div className="mp-form__field mp-form__field--full">
+                  <label className="mp-form__label">Project Name *</label>
+                  <input
+                    className="mp-form__input"
+                    type="text"
+                    name="title"
+                    value={addForm.title}
+                    onChange={handleAddFieldChange}
+                    placeholder="e.g. Modern Courtyard Villa"
+                    required
+                  />
+                </div>
+
+                <div className="mp-form__field">
+                  <label className="mp-form__label">Client Name</label>
+                  <input
+                    className="mp-form__input"
+                    type="text"
+                    name="client"
+                    value={addForm.client}
+                    onChange={handleAddFieldChange}
+                    placeholder="e.g. Sharma Family"
+                  />
+                </div>
+
+                <div className="mp-form__field">
+                  <label className="mp-form__label">Location</label>
+                  <input
+                    className="mp-form__input"
+                    type="text"
+                    name="location"
+                    value={addForm.location}
+                    onChange={handleAddFieldChange}
+                    placeholder="e.g. Gurgaon, India"
+                  />
+                </div>
+
+                <div className="mp-form__field">
+                  <label className="mp-form__label">Budget (₹)</label>
+                  <input
+                    className="mp-form__input"
+                    type="number"
+                    name="budget"
+                    value={addForm.budget}
+                    onChange={handleAddFieldChange}
+                    placeholder="e.g. 2500000"
+                  />
+                </div>
+
+                <div className="mp-form__field">
+                  <label className="mp-form__label">Date</label>
+                  <input
+                    className="mp-form__input"
+                    type="date"
+                    name="date"
+                    value={addForm.date}
+                    onChange={handleAddFieldChange}
+                  />
+                </div>
+
+                <div className="mp-form__field mp-form__field--full">
+                  <label className="mp-form__label">Status</label>
+                  <select
+                    className="mp-form__select"
+                    name="status"
+                    value={addForm.status}
+                    onChange={handleAddFieldChange}
+                  > 
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                  </select>
+                </div>
+
+                <div className="mp-form__field mp-form__field--full">
+                  <label className="mp-form__label">Description</label>
+                  <textarea
+                    className="mp-form__textarea"
+                    name="description"
+                    value={addForm.description}
+                    onChange={handleAddFieldChange}
+                    placeholder="Brief description of the project…"
+                  />
+                </div>
+              </div>
+
+              <div className="mp-form__actions">
+                <button
+                  type="button"
+                  className="mp-form__btn mp-form__btn--ghost"
+                  onClick={() => setShowAddModal(false)}
+                  disabled={addSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="mp-form__btn mp-form__btn--primary"
+                  disabled={addSaving}
+                >
+                  {addSaving && <Spinner />}
+                  {addSaving ? "Saving…" : "Save Project"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Manage Linked Architects modal — updates the salesperson's own
+          profile via PUT /api/salespersons/{id} with architecture_id as an array */}
+      {showLinkModal && (
+        <div
+          className="mp-modal-overlay"
+          onClick={() => !linkSaving && setShowLinkModal(false)}
+        >
+          <div
+            className="mp-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="mp-modal__head">
+              <div className="mp-modal__title">Linked Architects</div>
+              <button
+                type="button"
+                className="mp-modal__close"
+                onClick={() => !linkSaving && setShowLinkModal(false)}
+                aria-label="Close"
+                disabled={linkSaving}
+              >
+                <CloseIcon />
+              </button>
+            </div>
+
+            <form className="mp-form" onSubmit={handleUpdateLinkedArchitects}>
+              <p style={{ fontSize: "0.8rem", color: "#666", margin: 0 }}>
+                Select every architect you want linked to your profile.
+                Their projects will show under "Linked Architectures" on
+                your dashboard.
+              </p>
+
+              {loadingAllArchitects ? (
+                <div className="mp-state-row">
+                  <Spinner /> Loading architects…
+                </div>
+              ) : allArchitects.length === 0 ? (
+                <div className="mp-state-row">No architects found.</div>
+              ) : (
+                <div className="mp-check-list">
+                  {allArchitects.map((a) => {
+                    const idStr = String(a.id);
+                    const checked = selectedArchIds.includes(idStr);
+                    return (
+                      <label key={a.id} className="mp-check-item">
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleArchSelection(idStr)}
+                        />
+                        <span className="mp-check-item__label">
+                          <span>{a.full_name}</span>
+                          <span className="mp-check-item__sub">
+                            {a.firm_name || a.email || `ID #${a.id}`}
+                          </span>
+                        </span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              <div className="mp-selected-count">
+                {selectedArchIds.length} architect
+                {selectedArchIds.length === 1 ? "" : "s"} selected
+              </div>
+
+              <div className="mp-form__actions">
+                <button
+                  type="button"
+                  className="mp-form__btn mp-form__btn--ghost"
+                  onClick={() => setShowLinkModal(false)}
+                  disabled={linkSaving}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="mp-form__btn mp-form__btn--primary"
+                  disabled={linkSaving || loadingAllArchitects}
+                >
+                  {linkSaving && <Spinner />}
+                  {linkSaving ? "Saving…" : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
