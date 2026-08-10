@@ -211,7 +211,8 @@ export default function ProjectsWithArchitectPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, [modalProject, showAddModal, showLinkModal, addSaving, linkSaving]);
 
-  // Load the logged-in salesperson from the same cookie Header.jsx reads
+  // Load the logged-in salesperson from the same cookie Header.jsx reads.
+  // This IS "get the logged-in user id" — salesperson.id below is that id.
   useEffect(() => {
     const teamVerified = getCookie("team_user_verified");
     const teamData = getCookie("team_user");
@@ -241,6 +242,7 @@ export default function ProjectsWithArchitectPage() {
   }, [checkedAuth, salesperson]);
 
   // Always fetch the complete architect list once, for the Add Project dropdown
+  // and for the Edit Linked Architects checklist.
   useEffect(() => {
     fetchAllArchitects();
   }, []);
@@ -391,7 +393,6 @@ export default function ProjectsWithArchitectPage() {
       if (addForm.date) fd.append("date", addForm.date);
       if (addForm.imageFile) fd.append("image", addForm.imageFile);
 
-
       const response = await fetch(
         `${API_BASE}/projects/${addForm.architectId}`,
         { method: "POST", body: fd }
@@ -404,9 +405,7 @@ export default function ProjectsWithArchitectPage() {
         );
       }
 
-      // Ref
-      // 
-      // resh that architect's project list and expand their accordion
+      // Refresh that architect's project list and expand their accordion
       // so the salesperson sees the newly assigned project immediately.
       await fetchProjects(addForm.architectId, true);
       setOpenId(addForm.architectId);
@@ -423,34 +422,56 @@ export default function ProjectsWithArchitectPage() {
   };
 
   // ---- Manage linked architects handlers ----
+  // 1) Get logged-in user id -> salesperson.id (from cookie, set on state above)
+  // 2) Open modal, pre-check currently linked architect IDs
+  // 3) User toggles checkboxes against the full architect list
+  // 4) Submit -> PUT /api/salespersons/{salesperson.id} with architecture_id: number[]
   const openLinkModal = () => {
+    console.log("[EditLinkedArchitects] opening modal");
+    console.log("[EditLinkedArchitects] salesperson.id:", salesperson?.id);
+    console.log("[EditLinkedArchitects] currently linked ids:", linkedIds);
     setSelectedArchIds(linkedIds.map(String));
     setShowLinkModal(true);
   };
 
   const toggleArchSelection = (idStr) => {
-    setSelectedArchIds((prev) =>
-      prev.includes(idStr) ? prev.filter((x) => x !== idStr) : [...prev, idStr]
-    );
+    setSelectedArchIds((prev) => {
+      const next = prev.includes(idStr)
+        ? prev.filter((x) => x !== idStr)
+        : [...prev, idStr];
+      console.log("[EditLinkedArchitects] toggled id:", idStr, "-> selected now:", next);
+      return next;
+    });
   };
 
   const handleUpdateLinkedArchitects = async (e) => {
     e.preventDefault();
-    if (!salesperson?.id) return;
+    console.log("[EditLinkedArchitects] submit clicked");
+
+    if (!salesperson?.id) {
+      console.log("[EditLinkedArchitects] ABORT — no salesperson.id (not logged in?)");
+      return;
+    }
 
     setLinkSaving(true);
     try {
       const idsAsNumbers = selectedArchIds.map((id) => Number(id));
+      const url = `${API_BASE}/salespersons/${salesperson.id}`;
+      const body = { architecture_id: idsAsNumbers };
 
-      const response = await fetch(
-        `${API_BASE}/salespersons/${salesperson.id}`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ architecture_id: idsAsNumbers }),
-        }
-      );
+      console.log("[EditLinkedArchitects] PUT", url);
+      console.log("[EditLinkedArchitects] request body:", body);
+
+      const response = await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+
+      console.log("[EditLinkedArchitects] response status:", response.status, response.statusText);
+
       const result = await response.json();
+      console.log("[EditLinkedArchitects] response body:", result);
 
       if (!response.ok) {
         throw new Error(
@@ -467,15 +488,17 @@ export default function ProjectsWithArchitectPage() {
         ...salesperson,
         architecture_id: idsAsNumbers,
       };
+      console.log("[EditLinkedArchitects] updating local state + cookie:", updatedSalesperson);
       setSalesperson(updatedSalesperson);
       document.cookie = `team_user=${encodeURIComponent(
         JSON.stringify(updatedSalesperson)
       )}; path=/`;
 
+      console.log("[EditLinkedArchitects] SUCCESS");
       toast.success("Linked architects updated successfully!");
       setShowLinkModal(false);
     } catch (err) {
-      console.error(err);
+      console.error("[EditLinkedArchitects] ERROR:", err);
       toast.error(err.message || "Failed to update linked architects");
     } finally {
       setLinkSaving(false);
@@ -532,7 +555,7 @@ export default function ProjectsWithArchitectPage() {
           height: 56px;
           border-radius: 50%;
           background: #1a1a1a;
-          color: #fff; 1 
+          color: #fff;
           font-family: 'DM Serif Display', serif;
           font-size: 1.35rem;
           display: flex;
@@ -622,7 +645,7 @@ export default function ProjectsWithArchitectPage() {
           display: flex;
           align-items: center;
           gap: 0.65rem;
-          padding: 0rem 0rem;
+          padding: 0.35rem 0.4rem;
           border-radius: 4px;
           cursor: pointer;
           transition: background 0.15s;
@@ -1109,7 +1132,7 @@ export default function ProjectsWithArchitectPage() {
         }
 
         .mp-form__field--full {
-          grid-column: 1 / 0;
+          grid-column: 1 / -1;
         }
 
         .mp-form__label {
@@ -1479,20 +1502,6 @@ export default function ProjectsWithArchitectPage() {
             </div>
 
             <form className="mp-form" onSubmit={handleAddProjectSubmit}>
-              {/* <label htmlFor="mpProjectImage" className="mp-form__upload">
-                {addForm.image ? (
-                  <img
-                    src={addForm.image}
-                    alt="preview"
-                    className="mp-form__preview"
-                  />
-                ) : (
-                  <div className="mp-form__placeholder">
-                    <UploadIcon />
-                    <span>Upload Project Image</span>
-                  </div>
-                )}
-              </label> */}
               <input
                 id="mpProjectImage"
                 type="file"
@@ -1513,7 +1522,7 @@ export default function ProjectsWithArchitectPage() {
                     onChange={handleAddFieldChange}
                     required
                     disabled={loadingAllArchitects}
-                  >nnznznzn
+                  >
                     <option value="">
                       {loadingAllArchitects
                         ? "Loading architects…"
@@ -1599,7 +1608,7 @@ export default function ProjectsWithArchitectPage() {
                     name="status"
                     value={addForm.status}
                     onChange={handleAddFieldChange}
-                  > 
+                  >
                     <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
                   </select>
