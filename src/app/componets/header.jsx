@@ -10,7 +10,7 @@ function getCookie(name) {
   const match = document.cookie.match(new RegExp(`(?:^|; )${name}=([^;]*)`));
   return match ? decodeURIComponent(match[1]) : null;
 }
-
+o
 function deleteCookie(name) {
   document.cookie = `${name}=; path=/; max-age=0`;
 }
@@ -184,9 +184,9 @@ export default function Header() {
                       >
                         Dashboard
                       </a>
-                      <a href="/commissions" className="header__dropdown-link">
+                      {/* <a href="/commissions" className="header__dropdown-link">
                         Reward Points
-                      </a>
+                      </a> */}
                     </>
                   ) : (
                     <>
