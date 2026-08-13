@@ -645,7 +645,7 @@ export default function ProjectsWithArchitectPage() {
           display: flex;
           align-items: center;
           gap: 0.65rem;
-          padding: 0.35rem 0.4rem;
+          padding: 0rem 0.4rem;
           border-radius: 4px;
           cursor: pointer;
           transition: background 0.15s;
