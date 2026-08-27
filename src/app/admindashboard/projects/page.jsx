@@ -632,7 +632,7 @@ function ProjectModal({ project, onClose }) {
 
           <div className="modal-info-grid">
             <div className="info-box">
-              <label>Client</label>
+              <label>Client Name</label>
               <p>{project.client || "—"}</p>
             </div>
 
@@ -658,7 +658,7 @@ function ProjectModal({ project, onClose }) {
 
           {project.description && (
             <div className="modal-section">
-              <label>Description</label>
+              <label>Description</label> 
               <p className="project-description">{project.description}</p>
             </div>
           )}
