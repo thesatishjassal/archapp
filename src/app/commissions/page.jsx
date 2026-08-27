@@ -471,7 +471,9 @@ export default function RewardsPage() {
 
         /* ── ACTION BUTTONS ── */
         .rp__btn {
-          display: inline-flex; align-items: center; gap: 4px;
+          display: inline-flex; 
+          
+          -items: center; gap: 4px;
           padding: 5px 10px; border-radius: 7px;
           font-size: 11px; font-weight: 600; font-family: inherit;
           cursor: pointer; border: 1px solid transparent; transition: all 0.14s;
@@ -626,6 +628,8 @@ export default function RewardsPage() {
                   <span className="rp__calc-points-val">{sliderAmount.toLocaleString("en-IN")}</span>
                   <span className="rp__calc-points-label">Reward Points</span>
                 </div>
+
+                
               </div>
 
 <input

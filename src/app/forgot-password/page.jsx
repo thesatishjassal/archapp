@@ -1,4 +1,4 @@
-"use client";
+ "use client";
 
 import { useState } from "react";
 
@@ -73,7 +73,7 @@ export default function ForgotPasswordPage() {
 
           </form>
 
-          {/* SUCCESS */}
+          {/* SUCCESS */} 
 
           {success && (
 
@@ -85,7 +85,7 @@ export default function ForgotPasswordPage() {
             </div>
 
           )}
-
+,.;\
           {/* BOTTOM */}
 
           <div className="forgot__bottom">

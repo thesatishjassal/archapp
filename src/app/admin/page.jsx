@@ -254,7 +254,7 @@ function ProfileDrawer({  user,
             { icon: "💍", label: "Anniversary", value: user.anniversary_date },
           ].map(({ icon, label, value }) =>
             value ? (
-              <div key={label} style={{
+              <div key={label} style={{ 
                 display: "flex", alignItems: "center", gap: 14,
                 padding: "12px 0",
                 borderBottom: "1px solid #F3F4F6",
@@ -390,7 +390,7 @@ function ArchCard({
         {user.mobile_number && (
           <div style={{
             display: "flex", alignItems: "center", gap: 5,
-            fontSize: 12.5, color: "#6B7280",
+            fontSize: 12.5, colorInterpolationFiltersr: "#6B7280",
             background: "#F9FAFB", borderRadius: 8, padding: "5px 10px",
           }}>
             <span style={{ fontSize: 13 }}>📱</span>

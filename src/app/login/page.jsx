@@ -1138,14 +1138,14 @@ export default function LoginPage() {
 
                     {teamSuccess && (
                       <div className="lg-success-banner">
-                        <div className="lg-success-top">✓ &nbsp;Login successful — redirecting…</div>
+                        <div className="lg-success-top">✓ &nbsp;Login successful</div>
                         {teamUserData && (
                         <div className="lg-success-meta">
                             Welcome, {teamUserData.name}
                             <br />
-                            {teamUserData.email}
+                            {/* {teamUserData.email} */}
                             <br />
-                            {teamUserData.company_name}
+                            {/* {teamUserData.company_name} */}
                         </div>
                         )}
                       </div>
