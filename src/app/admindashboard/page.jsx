@@ -509,7 +509,7 @@ export default function AdminDashboard() {
             Projects
           </Link>
 
-          <Link href="/admindashboard/sales-persons" className="admin-nav-item">
+          <Link href="/admindashboard/salespersons" className="admin-nav-item">
             <span>◉</span>
             Sales Persons
           </Link>

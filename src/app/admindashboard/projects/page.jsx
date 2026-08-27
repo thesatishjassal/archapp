@@ -309,6 +309,18 @@ export default function ProjectsPage() {
             width: 100%;
           }
         }
+
+        /* Whole row is now clickable and opens the project modal. */
+        .projects-table tbody tr.clickable-row {
+          cursor: pointer;
+          transition: background-color 0.12s ease;
+        }
+        .projects-table tbody tr.clickable-row:hover {
+          background-color: #F9FAFB;
+        }
+        .projects-table tbody tr.clickable-row:active {
+          background-color: #F3F4F6;
+        }
       `}</style>
 
       {/* Sidebar */}
@@ -335,7 +347,7 @@ export default function ProjectsPage() {
           </Link>
 
           <Link
-            href="/admindashboard/sales-persons"
+            href="/admindashboard/salespersons"
             className="admin-nav-item"
           >
             <span>◉</span>
@@ -496,7 +508,7 @@ export default function ProjectsPage() {
             </div>
           )}
 
-          {/* Table */}
+          {/* Table — click any row to view full project detail in the modal */}
           {!loading && filteredProjects.length > 0 && (
             <div className="table-wrapper">
               <table className="admin-table projects-table">
@@ -509,13 +521,16 @@ export default function ProjectsPage() {
                     <th>Date</th>
                     <th>Budget</th>
                     <th>Status</th>
-                    <th></th>
                   </tr>
                 </thead>
 
                 <tbody>
                   {filteredProjects.map((project) => (
-                    <tr key={project.id}>
+                    <tr
+                      key={project.id}
+                      className="clickable-row"
+                      onClick={() => setSelectedProject(project)}
+                    >
                       {/* Project */}
                       <td>
                         <div className="project-name-cell">
@@ -567,17 +582,6 @@ export default function ProjectsPage() {
                         >
                           {project.status || "Unknown"}
                         </span>
-                      </td>
-
-                      {/* Action */}
-                      <td>
-                        <button
-                          type="button"
-                          className="view-button"
-                          onClick={() => setSelectedProject(project)}
-                        >
-                          View
-                        </button>
                       </td>
                     </tr>
                   ))}
@@ -658,7 +662,7 @@ function ProjectModal({ project, onClose }) {
 
           {project.description && (
             <div className="modal-section">
-              <label>Description</label> 
+              <label>Description</label>
               <p className="project-description">{project.description}</p>
             </div>
           )}
